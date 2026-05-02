@@ -28,8 +28,8 @@ DEBUG = True
 # SECURITY WARNING: Don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+ALLOWED_HOSTS = ['*']
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:5000"]
 
 # Application definition
 
@@ -139,11 +139,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL="USERS.USER"
 
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-   'http://localhost:5173'  # Add the frontend origin
-      # Alternative for localhost
-]
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [

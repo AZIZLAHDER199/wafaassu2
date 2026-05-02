@@ -8,7 +8,15 @@ export default defineConfig({
     outDir: 'dist',
   },
   server: {
-    port: 5173,
-    open: true,
+    port: 5000,
+    host: '0.0.0.0',
+    open: false,
+    allowedHosts: 'all',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
   },
 });
