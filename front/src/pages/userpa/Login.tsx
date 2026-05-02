@@ -1,95 +1,103 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // We add the original axios import back
-import { FiUser, FiLock, FiAlertCircle } from 'react-icons/fi';
+import axios from 'axios';
+import { FiUser, FiLock, FiAlertCircle, FiLogIn } from 'react-icons/fi';
 import './Login.css';
 import logo from './assets/logo.png';
 
-// The API URL is now hardcoded for localhost
 const API_BASE_URL = '';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string>('');
+  const [error, setError]       = useState<string>('');
+  const [loading, setLoading]   = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
-
+    setLoading(true);
     try {
-      // We now use the global axios with the full URL
-      const response = await axios.post(`${API_BASE_URL}/api/apilogin/`, {
-        username,
-        password,
-      });
-
+      const response = await axios.post(`${API_BASE_URL}/api/apilogin/`, { username, password });
       const { access, is_admin, username: loggedInUsername } = response.data;
-
       localStorage.setItem('token', access);
       localStorage.setItem('isAdmin', is_admin ? 'true' : 'false');
       localStorage.setItem('username', loggedInUsername);
-
-      // All users are sent to '/home' after login
       navigate('/home');
-
     } catch (err: any) {
-      if (err.response && err.response.data) {
-        setError(err.response.data.error || 'Login failed. Check credentials.');
+      if (err.response?.data) {
+        setError(err.response.data.error || 'Identifiants incorrects.');
       } else {
-        setError('Login failed due to a network or server error.');
+        setError('Erreur réseau. Vérifiez votre connexion.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleLogin} className="login-form" noValidate>
-        <div className="logo-wrapper">
-          <img src={logo} alt="Tamanar Assistance Logo" className="login-logo" />
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-logo-wrap">
+          <img src={logo} alt="Tamanar Assistance" className="login-logo" />
         </div>
-        <h2 className="form-title">Bienvenue</h2>
 
-        {error && (
-          <div className="error-message" role="alert">
-            <FiAlertCircle aria-hidden="true" />
-            <span>{error}</span>
+        <h2 className="login-title">Bienvenue</h2>
+        <p className="login-subtitle">Connectez-vous pour accéder au tableau de bord</p>
+        <hr className="login-divider" />
+
+        <form onSubmit={handleLogin} noValidate>
+          {error && (
+            <div className="login-error">
+              <FiAlertCircle size={15} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="login-label">Nom d'utilisateur</label>
+            <div className="input-group">
+              <FiUser className="input-icon" />
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Entrez votre nom d'utilisateur"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+              />
+            </div>
           </div>
-        )}
 
-        <div className="input-group">
-          <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            placeholder="Nom d'utilisateur"
-            className="input-field"
-            required
-            autoComplete="username"
-          />
-          <FiUser className="input-icon" aria-hidden="true" />
-        </div>
+          <div>
+            <label className="login-label">Mot de passe</label>
+            <div className="input-group">
+              <FiLock className="input-icon" />
+              <input
+                type="password"
+                className="input-field"
+                placeholder="Entrez votre mot de passe"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+          </div>
 
-        <div className="input-group">
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Mot de passe"
-            className="input-field"
-            required
-            autoComplete="current-password"
-          />
-          <FiLock className="input-icon" aria-hidden="true" />
-        </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Connexion...' : (
+              <span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'}}>
+                <FiLogIn /> SE CONNECTER
+              </span>
+            )}
+          </button>
+        </form>
 
-        <button type="submit" className="login-btn">
-          Se connecter
-        </button>
-      </form>
+        <p className="login-note">Accès réservé au personnel autorisé — © 2025 Tamanar Assistance</p>
+      </div>
     </div>
   );
 }

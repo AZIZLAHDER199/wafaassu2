@@ -1,66 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FactureData } from './OperationForm'; // Adjust path if needed
+import { FactureData } from './OperationForm';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { FiFileText, FiTrash2, FiDownload, FiRefreshCw, FiArrowLeft, FiTrendingUp } from 'react-icons/fi';
 
 const FactureRecords: React.FC = () => {
-  const [facturesData, setFacturesData] = useState<FactureData[]>([]);
-  const [facturesCount, setFacturesCount] = useState<number>(0);
-  const [lastEditDate, setLastEditDate] = useState<string | null>(null);
-  const [showTotal, setShowTotal] = useState(false);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [facturesData, setFacturesData]   = useState<FactureData[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState<string | null>(null);
+  const [searchTerm, setSearchTerm]       = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    const adminStatus = localStorage.getItem('is_admin') === 'true';
-    setIsAdmin(adminStatus);
-
     const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Please log in to access this page.');
-      navigate('/login');
-      return;
-    }
-
-    fetchFacturesData(token);
+    if (!token) { navigate('/login'); return; }
+    fetchData(token);
   }, [navigate]);
 
-  const fetchFacturesData = async (token: string) => {
-    setLoading(true);
-    setError(null);
+  const fetchData = async (token: string) => {
+    setLoading(true); setError(null);
     try {
-      const response = await fetch('/api/get_factures/', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch('/api/get_factures/', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          const newToken = await refreshToken();
-          if (newToken) return fetchFacturesData(newToken);
-        }
-        throw new Error(`Failed to fetch data: ${response.statusText}`);
-      }
-
-      const data = await response.json() as FactureData[];
-      console.log('Fetched factures data:', data);
+      if (res.status === 401) { const t = await refreshToken(); if (t) return fetchData(t); return; }
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      const data: FactureData[] = await res.json();
       setFacturesData(data);
-      setFacturesCount(data.length);
-      if (data.length > 0) {
-        const sortedData = data.sort((a, b) =>
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setLastEditDate(sortedData[0].date);
-      } else {
-        setLastEditDate(null);
-      }
-    } catch (error) {
-      console.error('Error fetching factures data:', error);
-      setError((error as Error).message || 'Unknown error occurred');
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -68,256 +37,206 @@ const FactureRecords: React.FC = () => {
 
   const refreshToken = async (): Promise<string | null> => {
     const refresh = localStorage.getItem('refresh_token');
-    if (!refresh) {
-      alert('No refresh token found. Please log in again.');
-      navigate('/login');
-      return null;
-    }
+    if (!refresh) { navigate('/login'); return null; }
     try {
-      const response = await fetch('/api/token/refresh/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem('token', data.access);
-        return data.access;
-      } else {
-        alert('Token refresh failed: ' + JSON.stringify(data));
-        navigate('/login');
-        return null;
-      }
-    } catch (error) {
-      alert('Error refreshing token: ' + error);
-      navigate('/login');
-      return null;
-    }
+      const res  = await fetch('/api/token/refresh/', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ refresh }) });
+      const data = await res.json();
+      if (res.ok) { localStorage.setItem('token', data.access); return data.access; }
+      navigate('/login'); return null;
+    } catch { navigate('/login'); return null; }
   };
 
   const deleteFacture = async (id: number) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('No token found. Please log in again.');
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/facture/${id}/`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        await fetchFacturesData(token);
-        alert('Facture deleted successfully!');
-      } else if (response.status === 401) {
-        const newToken = await refreshToken();
-        if (newToken) await deleteFacture(id);
-      } else {
-        throw new Error('Failed to delete facture');
-      }
-    } catch (error) {
-      console.error('Error deleting facture:', error);
-      alert('Error deleting facture: ' + (error as Error).message);
-    }
+    if (!window.confirm('Supprimer cette facture ?')) return;
+    const token = localStorage.getItem('token')!;
+    const res = await fetch(`/api/facture/${id}/`, { method:'DELETE', headers:{ Authorization:`Bearer ${token}` } });
+    if (res.ok) fetchData(token);
+    else if (res.status === 401) { const t = await refreshToken(); if (t) deleteFacture(id); }
   };
 
-  const exportFactureToPDF = async (facture: FactureData) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('No token found. Please log in again.');
-      navigate('/login');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('facture_num', facture.facture_num || 'N/A');
-    formData.append('date', facture.date || 'N/A');
-    formData.append('destinataire', facture.billing_company || 'N/A');
-    formData.append('ice', facture.ice || 'N/A');
-    formData.append('adresse', facture.adresse || 'N/A');
-    formData.append('reference', facture.reference || 'N/A');
-    formData.append('point_attach', facture.point_attach || 'N/A');
-    formData.append('lieu_intervention', facture.lieu_intervention || 'N/A');
-    formData.append('destination', facture.destination || 'N/A');
-    formData.append('perimetre', facture.perimetre || 'N/A');
-    formData.append('description', facture.description || 'N/A');
-    formData.append('details', facture.details || '');
-    formData.append('montant', facture.montant_ttc?.toString() || '0');
-
-    try {
-      const response = await fetch('/generate_facture_pdf/', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      console.log('Response status:', response.status); // Log bch n-chuf l-status
-      if (!response.ok) {
-        if (response.status === 401) {
-          const newToken = await refreshToken();
-          if (newToken) return exportFactureToPDF(facture);
-        } else if (response.status === 404) {
-          throw new Error('Endpoint /generate_facture_pdf/ not found. Check server configuration.');
-        }
-        throw new Error(`Failed to generate PDF: ${response.statusText}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `facture_${facture.facture_num || facture.id}_${new Date().toISOString().split('T')[0]}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error generating facture PDF:', error);
-      alert('Error generating facture PDF: ' + (error as Error).message);
-    }
-  };
-
-  const exportToPDF = () => {
-    if (facturesData.length === 0) {
-      alert('No factures data available to export.');
-      return;
-    }
-
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Registre des Factures', 14, 20);
-
-    const columns = [
-      'ID', 'Numéro Facture', 'Date', 'Société', 'ICE', 'Adresse', 'Référence', 'Lieu',
-      'Destination', 'Périmètre', 'Description', 'Montant HT', 'TVA', 'Montant TTC', 'User',
-    ];
-
-    const rows = facturesData.map((facture) => [
-      facture.id.toString(),
-      facture.facture_num || 'N/A',
-      facture.date || 'N/A',
-      facture.billing_company || 'N/A',
-      facture.ice || 'N/A',
-      facture.adresse || 'N/A',
-      facture.reference || 'N/A',
-      facture.lieu_intervention || 'N/A',
-      facture.destination || 'N/A',
-      facture.perimetre || 'N/A',
-      facture.description || 'N/A',
-      facture.montant_ht?.toString() || '0',
-      facture.tva?.toString() || '0',
-      facture.montant_ttc?.toString() || '0',
-      facture.user?.username || 'N/A',
-    ]);
-
+  const exportAllPDF = () => {
+    if (!facturesData.length) return;
+    const doc = new jsPDF('landscape');
+    doc.setFontSize(14);
+    doc.text('Registre des Factures', 14, 16);
+    doc.setFontSize(9);
+    doc.text(`Exporté le ${new Date().toLocaleDateString('fr-FR')}`, 14, 22);
     autoTable(doc, {
-      head: [columns],
-      body: rows,
-      startY: 30,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [22, 160, 133], textColor: [255, 255, 255] },
-      columnStyles: {
-        0: { cellWidth: 10 }, 1: { cellWidth: 20 }, 2: { cellWidth: 15 }, 3: { cellWidth: 20 },
-        4: { cellWidth: 15 }, 5: { cellWidth: 20 }, 6: { cellWidth: 15 }, 7: { cellWidth: 20 },
-        8: { cellWidth: 20 }, 9: { cellWidth: 15 }, 10: { cellWidth: 25 }, 11: { cellWidth: 15 },
-        12: { cellWidth: 15 }, 13: { cellWidth: 15 }, 14: { cellWidth: 15 },
-      },
+      startY: 28,
+      head: [['N° Facture','Date','Société','Référence','Lieu','Destination','Montant HT','TVA','Montant TTC']],
+      body: facturesData.map(f => [
+        f.facture_num||'—', f.date||'—', f.billing_company||'—',
+        f.reference||'—', f.lieu_intervention||'—', f.destination||'—',
+        `${f.montant_ht||0} MAD`, `${f.tva||0}%`, `${f.montant_ttc||0} MAD`,
+      ]),
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [30,64,175], textColor:255, fontStyle:'bold' },
+      alternateRowStyles: { fillColor: [239,246,255] },
     });
-
     doc.save(`factures_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
-  if (loading) return <div className="text-center text-lg">Loading...</div>;
-  if (error) return <div className="text-center text-lg text-red-500">Error: {error}</div>;
+  // stats
+  const totalTTC   = facturesData.reduce((s,f) => s + (Number(f.montant_ttc)||0), 0);
+  const totalHT    = facturesData.reduce((s,f) => s + (Number(f.montant_ht)||0),  0);
+  const lastDate   = facturesData.length
+    ? facturesData.slice().sort((a,b)=> new Date(b.date).getTime()-new Date(a.date).getTime())[0].date
+    : null;
+
+  const filtered = facturesData.filter(f =>
+    [f.facture_num,f.billing_company,f.reference,f.lieu_intervention,f.destination]
+      .some(v => v?.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   return (
-    <div className="min-h-screen w-screen bg-blue-300 flex flex-col items-center justify-between py-8">
-      <div className="flex flex-col items-center w-full">
-        <h2 className="text-2xl font-bold mb-4">Registre des Factures Records</h2>
-        <p className="text-lg mb-2">Total Factures: {facturesCount}</p>
-        <p className="text-lg mb-4">Last Edit: {lastEditDate || 'N/A'}</p>
-        <button
-          onClick={() => setShowTotal(!showTotal)}
-          className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 mb-4"
-        >
-          {showTotal ? 'Hide Total' : 'Show Total'}
-        </button>
-        {showTotal && (
-          <div className="total-section bg-gray-100 p-4 rounded-lg mb-4">
-            <h3 className="text-xl font-semibold">Total Factures</h3>
-            <p>Total: {facturesCount}</p>
-          </div>
-        )}
-        {facturesData.length > 0 ? (
-          <table className="w-full max-w-4xl bg-white rounded-lg shadow-lg">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="py-2 px-4 border-b">ID</th>
-                <th className="py-2 px-4 border-b">Numéro Facture</th>
-                <th className="py-2 px-4 border-b">Date</th>
-                <th className="py-2 px-4 border-b">Société</th>
-                <th className="py-2 px-4 border-b">Référence</th>
-                <th className="py-2 px-4 border-b">Lieu</th>
-                <th className="py-2 px-4 border-b">Destination</th>
-                <th className="py-2 px-4 border-b">Montant TTC</th>
-                <th className="py-2 px-4 border-b">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {facturesData.map((facture) => (
-                <tr key={facture.id} className="hover:bg-gray-100">
-                  <td className="py-2 px-4 border-b">{facture.id}</td>
-                  <td className="py-2 px-4 border-b">{facture.facture_num}</td>
-                  <td className="py-2 px-4 border-b">{facture.date}</td>
-                  <td className="py-2 px-4 border-b">{facture.billing_company}</td>
-                  <td className="py-2 px-4 border-b">{facture.reference}</td>
-                  <td className="py-2 px-4 border-b">{facture.lieu_intervention}</td>
-                  <td className="py-2 px-4 border-b">{facture.destination}</td>
-                  <td className="py-2 px-4 border-b">{facture.montant_ttc}</td>
-                  <td className="py-2 px-4 border-b">
-                    <button
-                      onClick={() => deleteFacture(facture.id)}
-                      className="bg-red-500 text-white font-semibold py-1 px-2 rounded-lg hover:bg-red-600 mr-2"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => exportFactureToPDF(facture)}
-                      className="bg-green-500 text-white font-semibold py-1 px-2 rounded-lg hover:bg-green-600"
-                    >
-                      Export PDF
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-lg">No factures found.</p>
-        )}
-        <div className="mt-4">
-          <button
-            onClick={exportToPDF}
-            className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-all duration-300"
-          >
-            Export All to PDF
-          </button>
-        </div>
-        {isAdmin && (
-          <div className="mt-4">
+    <div style={{ minHeight:'100vh', background:'var(--bg)', fontFamily:'Segoe UI,system-ui,sans-serif' }}>
+
+      {/* ── HEADER ── */}
+      <div style={{
+        background:'linear-gradient(135deg,#0891b2 0%,#38bdf8 100%)',
+        padding:'28px 32px 24px',
+        color:'#fff',
+        boxShadow:'0 4px 20px rgba(8,145,178,.3)',
+      }}>
+        <div style={{maxWidth:'1200px',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'16px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'16px'}}>
             <button
-              onClick={() => navigate('/facture-data')}
-              className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300"
+              onClick={() => navigate('/home')}
+              style={{background:'rgba(255,255,255,.2)',border:'none',color:'#fff',borderRadius:'10px',padding:'8px 14px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px',fontWeight:600}}
             >
-              View Facture Data
+              <FiArrowLeft /> Retour
             </button>
+            <div>
+              <h1 style={{margin:0,fontSize:'1.65rem',fontWeight:800,display:'flex',alignItems:'center',gap:'10px'}}>
+                <FiFileText /> Registre des Factures
+              </h1>
+              <p style={{margin:'4px 0 0',opacity:.8,fontSize:'.85rem'}}>Gestion et suivi des factures</p>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
+            <button onClick={() => fetchData(localStorage.getItem('token')!)}
+              style={{background:'rgba(255,255,255,.2)',border:'none',color:'#fff',borderRadius:'9px',padding:'9px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px',fontWeight:600}}>
+              <FiRefreshCw size={14}/> Actualiser
+            </button>
+            <button onClick={exportAllPDF}
+              style={{background:'#fff',border:'none',color:'#0891b2',borderRadius:'9px',padding:'9px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px',fontWeight:700}}>
+              <FiDownload size={14}/> Exporter PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:'1200px',margin:'0 auto',padding:'28px 24px'}}>
+
+        {/* ── STATS ── */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:'16px',marginBottom:'28px'}}>
+          <StatCard color="#0891b2" icon="🧾" label="Total Factures"    value={String(facturesData.length)} />
+          <StatCard color="#10b981" icon="💰" label="Total HT"          value={`${totalHT.toLocaleString('fr-FR')} MAD`} />
+          <StatCard color="#f97316" icon="📈" label="Total TTC"         value={`${totalTTC.toLocaleString('fr-FR')} MAD`} />
+          <StatCard color="#7c3aed" icon="📅" label="Dernière facture"  value={lastDate ? new Date(lastDate).toLocaleDateString('fr-FR') : '—'} />
+        </div>
+
+        {/* ── SEARCH ── */}
+        <div style={{background:'#fff',borderRadius:'12px',padding:'18px 22px',marginBottom:'24px',boxShadow:'0 2px 12px rgba(30,64,175,.07)',border:'1px solid #e0e7ff',display:'flex',alignItems:'center',gap:'12px'}}>
+          <span style={{fontSize:'1.1rem'}}>🔍</span>
+          <input
+            type="text"
+            placeholder="Rechercher par numéro, société, référence, lieu..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{
+              flex:1, border:'1.5px solid #c7d2fe', borderRadius:'8px',
+              padding:'9px 14px', fontSize:'.88rem', color:'#0f172a',
+              background:'#f8faff', outline:'none',
+            }}
+          />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')}
+              style={{background:'#f1f5f9',border:'none',borderRadius:'6px',padding:'6px 12px',cursor:'pointer',color:'#64748b',fontSize:'.8rem'}}>
+              Effacer
+            </button>
+          )}
+        </div>
+
+        {/* ── TABLE ── */}
+        {loading ? (
+          <LoadingState />
+        ) : error ? (
+          <ErrorState message={error} onRetry={() => fetchData(localStorage.getItem('token')!)} />
+        ) : filtered.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div style={{background:'#fff',borderRadius:'14px',overflow:'hidden',boxShadow:'0 2px 16px rgba(30,64,175,.09)',border:'1px solid #e0e7ff'}}>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'.855rem'}}>
+                <thead>
+                  <tr style={{background:'linear-gradient(90deg,#0891b2,#38bdf8)'}}>
+                    {['N° Facture','Date','Société d\'assistance','Référence','Lieu','Destination','Montant HT','TVA','Montant TTC','Actions'].map(h => (
+                      <th key={h} style={{padding:'13px 14px',color:'#fff',fontWeight:700,textAlign:'left',whiteSpace:'nowrap',fontSize:'.8rem',letterSpacing:'.3px'}}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((f, i) => (
+                    <tr key={f.id}
+                      style={{
+                        background: i%2===0 ? '#fff' : '#f0f9ff',
+                        borderBottom:'1px solid #e0f2fe',
+                        transition:'background .15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background='#dbeafe'}
+                      onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = i%2===0?'#fff':'#f0f9ff'}
+                    >
+                      <td style={{padding:'11px 14px'}}>
+                        <span style={{background:'#dbeafe',color:'#1e40af',padding:'3px 10px',borderRadius:'999px',fontWeight:700,fontSize:'.78rem'}}>
+                          {f.facture_num || '—'}
+                        </span>
+                      </td>
+                      <td style={{padding:'11px 14px',color:'#334155',whiteSpace:'nowrap'}}>
+                        {f.date ? new Date(f.date).toLocaleDateString('fr-FR') : '—'}
+                      </td>
+                      <td style={{padding:'11px 14px',fontWeight:600,color:'#0f172a'}}>{f.billing_company || '—'}</td>
+                      <td style={{padding:'11px 14px',color:'#475569'}}>{f.reference || '—'}</td>
+                      <td style={{padding:'11px 14px',color:'#475569'}}>{f.lieu_intervention || '—'}</td>
+                      <td style={{padding:'11px 14px',color:'#475569'}}>{f.destination || '—'}</td>
+                      <td style={{padding:'11px 14px',fontWeight:600,color:'#0f172a',whiteSpace:'nowrap'}}>{Number(f.montant_ht||0).toLocaleString('fr-FR')} MAD</td>
+                      <td style={{padding:'11px 14px'}}>
+                        <span style={{background:'#fff7ed',color:'#c2410c',padding:'2px 8px',borderRadius:'6px',fontSize:'.78rem',fontWeight:600}}>
+                          {f.tva || 0}%
+                        </span>
+                      </td>
+                      <td style={{padding:'11px 14px'}}>
+                        <span style={{background:'#d1fae5',color:'#065f46',padding:'4px 10px',borderRadius:'8px',fontWeight:700,fontSize:'.85rem',whiteSpace:'nowrap'}}>
+                          {Number(f.montant_ttc||0).toLocaleString('fr-FR')} MAD
+                        </span>
+                      </td>
+                      <td style={{padding:'11px 14px'}}>
+                        <div style={{display:'flex',gap:'6px',flexWrap:'nowrap'}}>
+                          <button
+                            onClick={() => navigate(`/generate-facture/${f.id}`)}
+                            style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#1d4ed8',borderRadius:'7px',padding:'6px 10px',cursor:'pointer',fontSize:'.75rem',fontWeight:600,display:'flex',alignItems:'center',gap:'4px',whiteSpace:'nowrap'}}
+                          >
+                            <FiFileText size={12}/> Générer PDF
+                          </button>
+                          <button
+                            onClick={() => deleteFacture(f.id)}
+                            style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#b91c1c',borderRadius:'7px',padding:'6px 10px',cursor:'pointer',fontSize:'.75rem',fontWeight:600,display:'flex',alignItems:'center',gap:'4px'}}
+                          >
+                            <FiTrash2 size={12}/> Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{padding:'12px 20px',background:'#f8faff',borderTop:'1px solid #e0e7ff',fontSize:'.78rem',color:'#64748b',display:'flex',justifyContent:'space-between'}}>
+              <span>{filtered.length} facture{filtered.length>1?'s':''} affichée{filtered.length>1?'s':''}</span>
+              <span>Total filtré TTC : <strong style={{color:'#065f46'}}>{filtered.reduce((s,f)=>s+(Number(f.montant_ttc)||0),0).toLocaleString('fr-FR')} MAD</strong></span>
+            </div>
           </div>
         )}
       </div>
@@ -326,3 +245,38 @@ const FactureRecords: React.FC = () => {
 };
 
 export default FactureRecords;
+
+/* ── sub-components ── */
+const StatCard = ({color,icon,label,value}:{color:string;icon:string;label:string;value:string}) => (
+  <div style={{background:'#fff',borderRadius:'14px',padding:'18px 20px',boxShadow:'0 2px 12px rgba(30,64,175,.07)',border:'1px solid #e0e7ff',display:'flex',alignItems:'center',gap:'14px'}}>
+    <div style={{width:'48px',height:'48px',borderRadius:'12px',background:`${color}1a`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.4rem'}}>{icon}</div>
+    <div>
+      <div style={{fontSize:'.72rem',color:'#64748b',fontWeight:600,textTransform:'uppercase',letterSpacing:'.5px'}}>{label}</div>
+      <div style={{fontSize:'1.1rem',fontWeight:800,color:'#0f172a',marginTop:'2px'}}>{value}</div>
+    </div>
+  </div>
+);
+
+const LoadingState = () => (
+  <div style={{background:'#fff',borderRadius:'14px',padding:'60px',textAlign:'center',border:'1px solid #e0e7ff'}}>
+    <div style={{fontSize:'2rem',marginBottom:'12px'}}>⏳</div>
+    <p style={{color:'#64748b',margin:0}}>Chargement des factures…</p>
+  </div>
+);
+
+const ErrorState = ({message,onRetry}:{message:string;onRetry:()=>void}) => (
+  <div style={{background:'#fef2f2',borderRadius:'14px',padding:'40px',textAlign:'center',border:'1px solid #fecaca'}}>
+    <div style={{fontSize:'2rem',marginBottom:'12px'}}>⚠️</div>
+    <p style={{color:'#b91c1c',margin:'0 0 16px'}}>{message}</p>
+    <button onClick={onRetry} style={{background:'#ef4444',color:'#fff',border:'none',borderRadius:'8px',padding:'8px 20px',cursor:'pointer',fontWeight:600}}>
+      Réessayer
+    </button>
+  </div>
+);
+
+const EmptyState = () => (
+  <div style={{background:'#fff',borderRadius:'14px',padding:'60px',textAlign:'center',border:'1px solid #e0e7ff'}}>
+    <div style={{fontSize:'3rem',marginBottom:'12px'}}>🧾</div>
+    <p style={{color:'#64748b',margin:0,fontSize:'1rem'}}>Aucune facture trouvée.</p>
+  </div>
+);
