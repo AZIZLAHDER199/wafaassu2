@@ -27,9 +27,6 @@ interface MonthlyTotal { month: string; total_prix: number; }
 
 type Tab = 'factures' | 'interventions' | 'suiviCarburant';
 
-/* ── tiny helpers ── */
-const R = '#cc0000';
-const DARK = '#111';
 const fmt = (n: number) => `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DH`;
 
 /* ── Responsive table ── */
@@ -38,17 +35,17 @@ const DataTable: React.FC<{
   data: any[];
   renderActions?: (row: any) => React.ReactNode;
 }> = ({ columns, data, renderActions }) => (
-  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: '12px', border: '1px solid #fee2e2' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '540px', fontSize: '.84rem' }}>
+  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '520px', fontSize: '.84rem' }}>
       <thead>
-        <tr style={{ background: `linear-gradient(90deg,${DARK},#333)` }}>
+        <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
           {columns.map(col => (
-            <th key={col} style={{ padding: '11px 14px', color: '#fff', fontWeight: 700, textAlign: 'left', whiteSpace: 'nowrap', fontSize: '.75rem', letterSpacing: '.4px' }}>
+            <th key={col} style={{ padding: '11px 14px', color: '#475569', fontWeight: 700, textAlign: 'left', whiteSpace: 'nowrap', fontSize: '.73rem', letterSpacing: '.5px', textTransform: 'uppercase' }}>
               {col}
             </th>
           ))}
           {renderActions && (
-            <th style={{ padding: '11px 14px', color: '#fff', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', fontSize: '.75rem' }}>
+            <th style={{ padding: '11px 14px', color: '#475569', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', fontSize: '.73rem', textTransform: 'uppercase' }}>
               Actions
             </th>
           )}
@@ -57,17 +54,17 @@ const DataTable: React.FC<{
       <tbody>
         {data.length ? data.map((row, i) => (
           <tr key={row.id ?? i}
-            style={{ background: i % 2 === 0 ? '#fff' : '#fff5f5', borderBottom: '1px solid #fee2e2', transition: 'background .15s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#fef2f2'}
-            onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = i % 2 === 0 ? '#fff' : '#fff5f5'}
+            style={{ background: '#fff', borderBottom: '1px solid #f1f5f9', transition: 'background .12s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#f8fafc'}
+            onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = '#fff'}
           >
             {columns.map(col => (
-              <td key={`${col}-${i}`} style={{ padding: '10px 14px', color: '#111' }}>
+              <td key={`${col}-${i}`} style={{ padding: '10px 14px', color: '#1e293b' }}>
                 {col === 'Statut' ? (
                   <span style={{
-                    background: row[col] === 'payé' ? '#dcfce7' : '#fee2e2',
-                    color:      row[col] === 'payé' ? '#166534' : '#991b1b',
-                    padding: '2px 10px', borderRadius: '999px', fontSize: '.74rem', fontWeight: 700,
+                    background: row[col] === 'payé' ? '#dcfce7' : '#fef9c3',
+                    color:      row[col] === 'payé' ? '#166534' : '#854d0e',
+                    padding: '2px 10px', borderRadius: '999px', fontSize: '.73rem', fontWeight: 700,
                   }}>
                     {row[col] || 'N/A'}
                   </span>
@@ -81,7 +78,7 @@ const DataTable: React.FC<{
         )) : (
           <tr>
             <td colSpan={columns.length + (renderActions ? 1 : 0)}
-              style={{ padding: '36px', textAlign: 'center', color: '#9ca3af' }}>
+              style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '.88rem' }}>
               Aucune donnée disponible
             </td>
           </tr>
@@ -92,16 +89,17 @@ const DataTable: React.FC<{
 );
 
 /* ── Stat card ── */
-const StatBadge = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
+const StatBadge = ({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent: string }) => (
   <div style={{
-    background: '#fff', border: '1.5px solid #fee2e2',
+    background: '#fff', border: '1px solid #e2e8f0',
     borderRadius: '12px', padding: '16px 20px',
-    boxShadow: '0 2px 10px rgba(204,0,0,.07)',
+    boxShadow: '0 1px 6px rgba(0,0,0,.05)',
+    borderLeft: `4px solid ${accent}`,
     minWidth: '140px', flex: '1 1 140px',
   }}>
-    <div style={{ fontSize: '.7rem', color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '4px' }}>{label}</div>
-    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: DARK }}>{value}</div>
-    {sub && <div style={{ fontSize: '.75rem', color: R, fontWeight: 600, marginTop: '2px' }}>{sub}</div>}
+    <div style={{ fontSize: '.68rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '4px' }}>{label}</div>
+    <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0f172a' }}>{value}</div>
+    {sub && <div style={{ fontSize: '.74rem', color: accent, fontWeight: 600, marginTop: '2px' }}>{sub}</div>}
   </div>
 );
 
@@ -129,9 +127,9 @@ const UserHistoryPage: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('Non authentifié.');
       const [fR, iR, sR, mR] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/get_factures/`,           { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/api/get_interventions/`,      { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/api/get_suivi_carburant/`,    { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/api/get_factures/`,              { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/api/get_interventions/`,         { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/api/get_suivi_carburant/`,       { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
         axios.get(`${API_BASE_URL}/api/get_suivi_carburant_stats/`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
       ]);
       const factures: FactureData[] = fR.data.map((f: any) => ({ ...f, montant_ttc: parseFloat(f.montant_ttc || 0) }));
@@ -173,7 +171,9 @@ const UserHistoryPage: React.FC = () => {
       s = s.filter(x => x.vehicule?.toLowerCase().includes(reference.toLowerCase()));
     }
     if (smitoStation && activeTab === 'suiviCarburant') {
-      s = s.filter(x => smitoStation === 'AUCUNE' ? (!x.smitoStation || x.smitoStation === 'AUCUNE') : x.smitoStation?.toLowerCase().includes(smitoStation.toLowerCase()));
+      s = s.filter(x => smitoStation === 'AUCUNE'
+        ? (!x.smitoStation || x.smitoStation === 'AUCUNE')
+        : x.smitoStation?.toLowerCase().includes(smitoStation.toLowerCase()));
     }
     setFilteredData({ factures: f, interventions: i, suiviCarburant: s });
   }, [data, filters, activeTab]);
@@ -209,7 +209,6 @@ const UserHistoryPage: React.FC = () => {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
-  // ── table configs ──
   const tableConfig = {
     factures: {
       cols: ['N° Facture', 'Date', 'Société', 'Montant TTC'],
@@ -248,33 +247,35 @@ const UserHistoryPage: React.FC = () => {
   };
 
   const totals = {
-    factures:      { count: filteredData.factures.length,      sum: filteredData.factures.reduce((a,f) => a+f.montant_ttc,0) },
-    interventions: { count: filteredData.interventions.length, sum: filteredData.interventions.reduce((a,i) => a+(i.cout_prestation_ttc||0),0) },
-    suiviCarburant:{ count: filteredData.suiviCarburant.length,sum: filteredData.suiviCarburant.reduce((a,s) => a+s.prix,0) },
+    factures:       { count: filteredData.factures.length,       sum: filteredData.factures.reduce((a, f) => a + f.montant_ttc, 0) },
+    interventions:  { count: filteredData.interventions.length,  sum: filteredData.interventions.reduce((a, i) => a + (i.cout_prestation_ttc || 0), 0) },
+    suiviCarburant: { count: filteredData.suiviCarburant.length, sum: filteredData.suiviCarburant.reduce((a, s) => a + s.prix, 0) },
   };
 
   const areFiltersActive = filters.startDate || filters.endDate || filters.reference || filters.smitoStation;
 
-  const tabLabels: Record<Tab, { icon: React.ReactNode; label: string }> = {
-    interventions:  { icon: <Clipboard size={15}/>, label: 'Interventions' },
-    factures:       { icon: <File size={15}/>,      label: 'Factures' },
-    suiviCarburant: { icon: <Truck size={15}/>,     label: 'Carburant' },
+  const tabConfig: Record<Tab, { icon: React.ReactNode; label: string; accent: string }> = {
+    interventions:  { icon: <Clipboard size={14}/>, label: 'Interventions',   accent: '#2563eb' },
+    factures:       { icon: <File size={14}/>,      label: 'Factures',        accent: '#7c3aed' },
+    suiviCarburant: { icon: <Truck size={14}/>,     label: 'Carburant',       accent: '#16a34a' },
   };
 
+  const activeAccent = tabConfig[activeTab].accent;
+
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fafafa', gap: '16px' }}>
-      <div style={{ width: '48px', height: '48px', border: '4px solid #fee2e2', borderTop: `4px solid ${R}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <p style={{ color: R, fontWeight: 600 }}>Chargement de l'historique…</p>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', gap: '14px' }}>
+      <div style={{ width: '44px', height: '44px', border: '4px solid #e2e8f0', borderTop: '4px solid #2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <p style={{ color: '#475569', fontWeight: 600, fontSize: '.9rem' }}>Chargement de l'historique…</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', padding: '20px' }}>
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '14px', padding: '32px', maxWidth: '440px', textAlign: 'center' }}>
-        <AlertCircle size={40} color={R} style={{ marginBottom: '12px' }} />
-        <p style={{ color: '#991b1b', fontWeight: 600, marginBottom: '16px' }}>{error}</p>
-        <button onClick={fetchData} style={{ background: R, color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 22px', cursor: 'pointer', fontWeight: 700 }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', padding: '20px' }}>
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '36px', maxWidth: '400px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,.08)' }}>
+        <AlertCircle size={40} color="#ef4444" style={{ marginBottom: '12px' }} />
+        <p style={{ color: '#374151', fontWeight: 600, marginBottom: '16px' }}>{error}</p>
+        <button onClick={fetchData} style={{ background: '#1e293b', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 22px', cursor: 'pointer', fontWeight: 700, fontSize: '.86rem' }}>
           Réessayer
         </button>
       </div>
@@ -282,18 +283,20 @@ const UserHistoryPage: React.FC = () => {
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f5f9', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
 
       {/* ── HEADER ── */}
-      <header style={{ background: DARK, padding: '0 clamp(16px,4vw,28px)', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 16px rgba(0,0,0,.4)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
+      <header style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '0 clamp(16px,4vw,28px)', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 6px rgba(0,0,0,.05)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button onClick={() => navigate(-1)} style={{ background: 'rgba(204,0,0,.2)', border: '1px solid rgba(204,0,0,.4)', color: '#fff', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', whiteSpace: 'nowrap' }}>
-            <ChevronLeft size={16} /> Retour
+          <button onClick={() => navigate(-1)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', whiteSpace: 'nowrap' }}>
+            <ChevronLeft size={15} /> Retour
           </button>
-          <img src={logo} alt="Logo" style={{ height: '38px', objectFit: 'contain' }} />
-          <span style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(.85rem,2vw,1rem)', whiteSpace: 'nowrap' }}>Historique</span>
+          <img src={logo} alt="Logo" style={{ height: '36px', objectFit: 'contain' }} />
+          <span style={{ fontWeight: 800, color: '#0f172a', fontSize: 'clamp(.85rem,2vw,.98rem)', whiteSpace: 'nowrap' }}>
+            Historique d'activités
+          </span>
         </div>
-        <button onClick={fetchData} style={{ background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', color: '#ccc', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.8rem', whiteSpace: 'nowrap' }}>
+        <button onClick={fetchData} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.8rem', whiteSpace: 'nowrap' }}>
           <RefreshCw size={13} /> Actualiser
         </button>
       </header>
@@ -301,64 +304,64 @@ const UserHistoryPage: React.FC = () => {
       <main style={{ flex: 1, padding: 'clamp(16px,3vw,28px) clamp(12px,3vw,28px)', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
 
         {/* ── STAT CARDS ── */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginBottom: '24px' }}>
-          <StatBadge label="Interventions"  value={totals.interventions.count}  sub={fmt(totals.interventions.sum)} />
-          <StatBadge label="Factures"       value={totals.factures.count}       sub={fmt(totals.factures.sum)} />
-          <StatBadge label="Suivi Carburant" value={totals.suiviCarburant.count} sub={fmt(totals.suiviCarburant.sum)} />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginBottom: '22px' }}>
+          <StatBadge label="Interventions"   value={totals.interventions.count}  sub={fmt(totals.interventions.sum)}  accent="#2563eb" />
+          <StatBadge label="Factures"        value={totals.factures.count}       sub={fmt(totals.factures.sum)}       accent="#7c3aed" />
+          <StatBadge label="Suivi Carburant" value={totals.suiviCarburant.count} sub={fmt(totals.suiviCarburant.sum)} accent="#16a34a" />
         </div>
 
         {/* ── TABS ── */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px', borderBottom: '2px solid #fee2e2', paddingBottom: '0' }}>
-          {(Object.keys(tabLabels) as Tab[]).map(tab => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '18px' }}>
+          {(Object.keys(tabConfig) as Tab[]).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '9px 20px', borderRadius: '10px 10px 0 0',
-                border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '.85rem',
-                background: activeTab === tab ? R : '#fff',
-                color:      activeTab === tab ? '#fff' : '#6b7280',
-                borderBottom: activeTab === tab ? `2px solid ${R}` : '2px solid transparent',
-                marginBottom: '-2px',
+                padding: '8px 18px', borderRadius: '8px',
+                border: activeTab === tab ? `1.5px solid ${tabConfig[tab].accent}` : '1.5px solid #e2e8f0',
+                cursor: 'pointer', fontWeight: 700, fontSize: '.83rem',
+                background: activeTab === tab ? tabConfig[tab].accent : '#fff',
+                color:      activeTab === tab ? '#fff' : '#64748b',
                 transition: 'all .15s',
+                boxShadow: activeTab === tab ? `0 2px 10px ${tabConfig[tab].accent}33` : 'none',
               }}
             >
-              {tabLabels[tab].icon} {tabLabels[tab].label}
+              {tabConfig[tab].icon} {tabConfig[tab].label}
             </button>
           ))}
         </div>
 
         {/* ── FILTER BAR ── */}
-        <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #fee2e2', marginBottom: '20px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(204,0,0,.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', cursor: 'pointer', userSelect: 'none' }} onClick={() => setFiltersOpen(o => !o)}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: DARK, fontSize: '.88rem' }}>
-              <Filter size={15} color={R} /> Filtres
-              {areFiltersActive && <span style={{ background: R, color: '#fff', borderRadius: '999px', padding: '1px 8px', fontSize: '.7rem', fontWeight: 700 }}>actifs</span>}
+        <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '18px', overflow: 'hidden', boxShadow: '0 1px 6px rgba(0,0,0,.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 18px', cursor: 'pointer', userSelect: 'none' }} onClick={() => setFiltersOpen(o => !o)}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0f172a', fontSize: '.86rem' }}>
+              <Filter size={14} color={activeAccent} /> Filtres
+              {areFiltersActive && <span style={{ background: activeAccent, color: '#fff', borderRadius: '999px', padding: '1px 8px', fontSize: '.68rem', fontWeight: 700 }}>actifs</span>}
             </span>
-            <span style={{ color: '#9ca3af', fontSize: '.8rem' }}>{filtersOpen ? '▲' : '▼'}</span>
+            <span style={{ color: '#94a3b8', fontSize: '.78rem' }}>{filtersOpen ? '▲' : '▼'}</span>
           </div>
           {filtersOpen && (
-            <div style={{ padding: '0 18px 16px', borderTop: '1px solid #fee2e2' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: '12px', marginTop: '14px' }}>
+            <div style={{ padding: '0 18px 16px', borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(175px,1fr))', gap: '12px', marginTop: '14px' }}>
                 {[
-                  { id: 'startDate', label: 'Date début',  type: 'date',  name: 'startDate',  val: filters.startDate },
-                  { id: 'endDate',   label: 'Date fin',    type: 'date',  name: 'endDate',    val: filters.endDate },
+                  { id: 'startDate', label: 'Date début', type: 'date', name: 'startDate', val: filters.startDate },
+                  { id: 'endDate',   label: 'Date fin',   type: 'date', name: 'endDate',   val: filters.endDate },
                   { id: 'reference', label: activeTab === 'factures' ? 'N° Facture' : activeTab === 'interventions' ? 'Réf. dossier' : 'Véhicule', type: 'text', name: 'reference', val: filters.reference },
                 ].map(f => (
                   <div key={f.id}>
-                    <label style={{ display: 'block', fontSize: '.72rem', fontWeight: 700, color: '#374151', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.3px' }}>{f.label}</label>
-                    <input type={f.type} value={f.val} placeholder={f.type === 'text' ? 'Rechercher...' : ''}
+                    <label style={{ display: 'block', fontSize: '.7rem', fontWeight: 700, color: '#64748b', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '.3px' }}>{f.label}</label>
+                    <input type={f.type} value={f.val} placeholder={f.type === 'text' ? 'Rechercher…' : ''}
                       onChange={e => setFilters(p => ({ ...p, [f.name]: e.target.value }))}
-                      style={{ width: '100%', border: '1.5px solid #fecaca', borderRadius: '8px', padding: '7px 10px', fontSize: '.85rem', color: DARK, background: '#fff5f5', outline: 'none', boxSizing: 'border-box' }}
-                      onFocus={e => (e.target.style.borderColor = R)}
-                      onBlur={e => (e.target.style.borderColor = '#fecaca')}
+                      style={{ width: '100%', border: '1.5px solid #e2e8f0', borderRadius: '8px', padding: '7px 10px', fontSize: '.84rem', color: '#0f172a', background: '#f8fafc', outline: 'none', boxSizing: 'border-box' }}
+                      onFocus={e => (e.target.style.borderColor = activeAccent)}
+                      onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
                     />
                   </div>
                 ))}
                 {activeTab === 'suiviCarburant' && (
                   <div>
-                    <label style={{ display: 'block', fontSize: '.72rem', fontWeight: 700, color: '#374151', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.3px' }}>Station</label>
+                    <label style={{ display: 'block', fontSize: '.7rem', fontWeight: 700, color: '#64748b', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '.3px' }}>Station</label>
                     <select value={filters.smitoStation} onChange={e => setFilters(p => ({ ...p, smitoStation: e.target.value }))}
-                      style={{ width: '100%', border: '1.5px solid #fecaca', borderRadius: '8px', padding: '7px 10px', fontSize: '.85rem', color: DARK, background: '#fff5f5', outline: 'none', boxSizing: 'border-box' }}>
+                      style={{ width: '100%', border: '1.5px solid #e2e8f0', borderRadius: '8px', padding: '7px 10px', fontSize: '.84rem', color: '#0f172a', background: '#f8fafc', outline: 'none', boxSizing: 'border-box' }}>
                       <option value="">Toutes</option>
                       {validStations.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -366,11 +369,11 @@ const UserHistoryPage: React.FC = () => {
                 )}
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
-                <button onClick={applyFilters} style={{ background: R, color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 20px', cursor: 'pointer', fontWeight: 700, fontSize: '.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Filter size={13} /> Appliquer
+                <button onClick={applyFilters} style={{ background: activeAccent, color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 18px', cursor: 'pointer', fontWeight: 700, fontSize: '.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Filter size={12} /> Appliquer
                 </button>
-                <button onClick={clearFilters} style={{ background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <X size={13} /> Effacer
+                <button onClick={clearFilters} style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: '.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <X size={12} /> Effacer
                 </button>
               </div>
             </div>
@@ -378,22 +381,22 @@ const UserHistoryPage: React.FC = () => {
         </div>
 
         {/* ── TABLE AREA ── */}
-        <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #fee2e2', overflow: 'hidden', boxShadow: '0 2px 12px rgba(204,0,0,.08)' }}>
+        <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,.06)' }}>
 
           {/* section header */}
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '8px', height: '24px', background: R, borderRadius: '4px' }} />
-              <span style={{ fontWeight: 800, color: DARK, fontSize: '1rem' }}>
-                {tabLabels[activeTab].label}
+              <div style={{ width: '4px', height: '22px', background: activeAccent, borderRadius: '4px' }} />
+              <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '.95rem' }}>
+                {tabConfig[activeTab].label}
               </span>
-              <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 10px', borderRadius: '999px', fontSize: '.75rem', fontWeight: 700 }}>
+              <span style={{ background: activeAccent + '18', color: activeAccent, padding: '2px 9px', borderRadius: '999px', fontSize: '.73rem', fontWeight: 700 }}>
                 {tableConfig[activeTab].rows.length}
               </span>
             </div>
             <button onClick={() => exportCSV(tableConfig[activeTab].rows, tableConfig[activeTab].cols, activeTab)}
-              style={{ background: '#111', color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <FileSpreadsheet size={13} /> Exporter CSV
+              style={{ background: '#1e293b', color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FileSpreadsheet size={12} /> Exporter CSV
             </button>
           </div>
 
@@ -405,8 +408,8 @@ const UserHistoryPage: React.FC = () => {
                 activeTab === 'interventions'
                   ? row => (
                     <button onClick={() => navigate(`/generate-facture/${row.id}`)}
-                      style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: '7px', padding: '5px 12px', cursor: 'pointer', fontWeight: 700, fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                      <FileText size={12} /> Facture
+                      style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb', borderRadius: '7px', padding: '5px 12px', cursor: 'pointer', fontWeight: 700, fontSize: '.74rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                      <FileText size={11} /> Facture
                     </button>
                   )
                   : activeTab === 'factures'
@@ -414,8 +417,8 @@ const UserHistoryPage: React.FC = () => {
                     <button
                       onClick={() => row['N° Facture'] !== 'N/A' ? handleDownload(row.id, row['N° Facture']) : alert('Numéro non disponible.')}
                       disabled={downloadingId === row.id}
-                      style={{ background: downloadingId === row.id ? '#fee2e2' : DARK, color: '#fff', border: 'none', borderRadius: '7px', padding: '5px 12px', cursor: 'pointer', fontWeight: 700, fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', opacity: downloadingId === row.id ? .6 : 1 }}>
-                      <Download size={12} /> {downloadingId === row.id ? 'Chargement...' : 'Télécharger'}
+                      style={{ background: downloadingId === row.id ? '#f1f5f9' : '#1e293b', color: '#fff', border: 'none', borderRadius: '7px', padding: '5px 12px', cursor: 'pointer', fontWeight: 700, fontSize: '.74rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', opacity: downloadingId === row.id ? .6 : 1 }}>
+                      <Download size={11} /> {downloadingId === row.id ? 'Chargement…' : 'Télécharger'}
                     </button>
                   )
                   : undefined
@@ -424,7 +427,7 @@ const UserHistoryPage: React.FC = () => {
           </div>
 
           {/* summary footer */}
-          <div style={{ padding: '12px 20px', background: '#fff5f5', borderTop: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '.8rem', color: '#6b7280' }}>
+          <div style={{ padding: '11px 20px', background: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '.78rem', color: '#64748b' }}>
             <span>{tableConfig[activeTab].rows.length} enregistrement{tableConfig[activeTab].rows.length !== 1 ? 's' : ''}</span>
             <span style={{ fontWeight: 700, color: '#166534' }}>
               Total : {fmt(
@@ -438,10 +441,10 @@ const UserHistoryPage: React.FC = () => {
 
         {/* Monthly totals for carburant */}
         {activeTab === 'suiviCarburant' && monthlyTotals.length > 0 && (
-          <div style={{ marginTop: '20px', background: '#fff', borderRadius: '14px', border: '1px solid #fee2e2', overflow: 'hidden', boxShadow: '0 2px 12px rgba(204,0,0,.08)' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #fee2e2', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '8px', height: '22px', background: DARK, borderRadius: '4px' }} />
-              <span style={{ fontWeight: 800, color: DARK }}>Totaux mensuels</span>
+          <div style={{ marginTop: '18px', background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 8px rgba(0,0,0,.05)' }}>
+            <div style={{ padding: '13px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '4px', height: '20px', background: '#64748b', borderRadius: '4px' }} />
+              <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '.92rem' }}>Totaux mensuels</span>
             </div>
             <div style={{ padding: '16px' }}>
               <DataTable
@@ -453,7 +456,7 @@ const UserHistoryPage: React.FC = () => {
         )}
       </main>
 
-      <footer style={{ textAlign: 'center', fontSize: '.72rem', color: '#6b7280', padding: '14px', borderTop: '1px solid #e5e7eb', background: DARK, color: '#555' }}>
+      <footer style={{ textAlign: 'center', fontSize: '.72rem', color: '#94a3b8', padding: '14px', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
         © 2025 Tamanar Assistance — Tous droits réservés
       </footer>
     </div>
