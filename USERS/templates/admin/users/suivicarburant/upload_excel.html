@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+  <h1>{{ title }}</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div>
+      <input type="submit" value="Uploader" class="default" />
+      <a href="{% url 'admin:USERS_suivicarburant_changelist' %}" class="button">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

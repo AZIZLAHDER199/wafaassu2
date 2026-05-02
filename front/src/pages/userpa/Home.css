@@ -1,0 +1,44 @@
+
+.home-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #a2b6df 0%, #b993d6 100%);
+  padding: 32px 12px;
+  width: 100vw;
+}
+
+.home-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2e7d32;
+  margin-bottom: 10px;
+}
+
+.home-subtitle {
+  font-size: 1.2rem;
+  color: #388e3c;
+  margin-bottom: 20px;
+}
+
+.operation-selector {
+  width: 100%;
+  max-width: 400px;
+}
+
+.operation-dropdown {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+}
+
+.operation-dropdown:focus {
+  outline: none;
+  border-color: #4caf50;
+}

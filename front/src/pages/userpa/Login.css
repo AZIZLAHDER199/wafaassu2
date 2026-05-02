@@ -1,0 +1,256 @@
+body, html, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #f6f8f6;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Page container */
+.login-container {
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f8f6;
+  padding: 1rem;
+}
+
+/* Card */
+.login-form {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+
+/* Logo */
+.logo-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
+.login-logo {
+  width: 120px;
+  height: auto;
+  background: #fff;
+  padding: 0.4rem;
+  border: 1px solid #ddd;
+}
+
+/* Title */
+.form-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0d1b0d;
+  text-align: center;
+  margin-bottom: 1.4rem;
+  letter-spacing: 1px;
+}
+
+/* Inputs */
+.input-group {
+  width: 100%;
+  position: relative;
+  margin-bottom: 1.1rem;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.7rem;
+  border: 1px solid #cfd8cf;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background: #f4f6f4;
+  color: #222;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-field:focus {
+  border-color: #0d1b0d;
+  box-shadow: 0 0 0 2px rgba(13,27,13,0.15);
+  outline: none;
+  background: #ffffff;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.8rem;
+  transform: translateY(-50%);
+  color: #555;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+/* Button */
+.login-btn {
+  width: 100%;
+  background: #0d1b0d;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.9rem 0;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 1.5px;
+  transition: background 0.2s;
+  margin-top: 0.8rem;
+}
+
+.login-btn:hover {
+  background: #1a2e1a;
+}
+
+/* Error */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff1f1;
+  color: #b00020;
+  padding: 10px;
+  margin-bottom: 1rem;
+  font-size: 13px;
+  border: 1px solid #f2caca;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-form {
+    padding: 1.4rem;
+    max-width: 95vw;
+  }
+
+  .login-logo {
+    width: 90px;
+  }
+
+  .form-title {
+    font-size: 1.3rem;
+  }
+}
+/* ================================
+   GLOBAL LOOK (from InsureCo design)
+================================ */
+
+body, html, #root {
+  font-family: 'Public Sans', sans-serif;
+  background: #f6f8f6;
+  color: #0d1b0d;
+}
+
+/* Custom scrollbar (clean enterprise look) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b5b5b5;
+}
+
+/* ================================
+   DOCUMENT / INVOICE STYLE CARD
+================================ */
+
+.login-form {
+  border: 1px solid #e7f3e7;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+/* Header-like title (document style) */
+.form-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0d1b0d;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ================================
+   INPUTS – CLEAN INSURANCE STYLE
+================================ */
+
+.input-field {
+  background: #f6f8f6;
+  border: 1px solid #cfd8cf;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.input-field::placeholder {
+  color: #9aa59a;
+}
+
+.input-field:focus {
+  border-color: #11d411;
+  box-shadow: 0 0 0 2px rgba(17,212,17,0.15);
+}
+
+/* Icons color */
+.input-icon {
+  color: #6b7b6b;
+}
+
+/* ================================
+   BUTTON – ENTERPRISE GREEN
+================================ */
+
+.login-btn {
+  background: #0d1b0d;
+  border-radius: 4px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.login-btn:hover {
+  background: #1a2e1a;
+}
+
+/* ================================
+   ERROR MESSAGE (DOCUMENT ALERT)
+================================ */
+
+.error-message {
+  background: #fff4f4;
+  border: 1px solid #f2caca;
+  color: #b00020;
+  font-size: 13px;
+}
+
+/* ================================
+   SMALL TEXT / FOOTER FEEL
+================================ */
+
+.login-form::after {
+  content: "Unauthorized access is prohibited.";
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  color: #9aa59a;
+  margin-top: 16px;
+  border-top: 1px solid #e7f3e7;
+  padding-top: 10px;
+}

@@ -1,0 +1,53 @@
+nav ul {
+  display: flex;
+  justify-content: space-around;
+  background: linear-gradient(90deg, #a2b6df 0%, #b993d6 100%);
+  padding: 14px 0;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 2px 12px rgba(169,147,214,0.10);
+}
+
+nav ul li {
+  list-style-type: none;
+}
+
+nav ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 20px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  transition: background 0.2s, color 0.2s;
+}
+
+nav ul li a:hover {
+  color: #ff6347;
+}
+
+@media only screen and (min-width: 480px) {
+/* styles for devices with a minimum screen width of 480px */
+}
+
+@media only screen and (max-width: 480px) {
+/* styles for devices with a maximum screen width of 480px */
+}
+@media only screen and (max-width: 480px) {
+/* hide element on small screens */
+.my-element {
+display: none;
+}
+}
+
+@media only screen and (min-width: 480px) and (max-width: 1024px) {
+/* show element on medium-sized screens */
+.my-element {
+display: block;
+}
+}
+@media only screen and (orientation: portrait) {
+/* styles for portrait orientation */
+}
+
+@media only screen and (orientation: landscape) {
+/* styles for landscape orientation */
+}

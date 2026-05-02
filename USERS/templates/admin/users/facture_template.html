@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Facture N° {{ facture_num }} - TAMANAR ASSISTANCE</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 40px;
+        }
+
+        .invoice-container {
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+
+        .title-box {
+            background: #FEE2E2;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .details p {
+            margin: 3px 0;
+        }
+
+        .details {
+            margin-bottom: 20px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .totals-block p {
+            margin: 5px 0;
+        }
+
+        .totals-block {
+            margin-bottom: 20px;
+        }
+
+        .amount-in-words {
+            padding: 10px;
+            background: #F9FAFB;
+            margin-bottom: 20px;
+        }
+
+        .signature-block {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .signature-logo {
+            max-width: 150px;
+            height: auto;
+            margin-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 10px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header with centered logo -->
+        <div class="header">
+            <img src="https://i.ibb.co/mVxjjNSj/logo.png" alt="TAMANAR ASSISTANCE Logo" class="logo">
+        </div>
+
+        <!-- Title -->
+        <div class="title-box">
+            <h2>FACTURE N° {{ facture_num }}</h2>
+            <p>Date: {{ date }}</p>
+        </div>
+
+        <!-- Client Info -->
+        <div class="details">
+            <p><strong>Destinataire:</strong> {{ destinataire }}</p>
+            <p><strong>ICE:</strong> {{ ice }}</p>
+            <p><strong>Adresse:</strong> {{ adresse }}</p>
+            <p><strong>Référence:</strong> {{ reference }}</p>
+            <p><strong>Lieu:</strong> {{ lieu_intervention }}</p>
+        </div>
+
+        <!-- Table -->
+        <table class="items-table">
+            <tr>
+                <th>Description</th>
+                <th>Montant DH</th>
+            </tr>
+            <tr>
+                <td>{{ description }}</td>
+                <td>{{ montant_ttc|floatformat:2 }}</td>
+            </tr>
+        </table>
+
+        <!-- Totals -->
+        <div class="totals-block">
+            <p><strong>TOTAL HT:</strong> {{ montant_ht|floatformat:2 }} DH</p>
+            <p><strong>TVA 20%:</strong> {{ tva_amount|floatformat:2 }} DH</p>
+            <p><strong>MONTANT TTC:</strong> {{ montant_ttc|floatformat:2 }} DH</p>
+        </div>
+
+        <!-- Amount in Words -->
+        <div class="amount-in-words">
+            <p>Arrêté à: <strong>{{ montant_ttc_text }} DIRHAMS TTC</strong></p>
+        </div>
+
+        <!-- Signature -->
+        <div class="signature-block">
+            <p style="font-weight: bold;">CACHET & SIGNATURE</p>
+            <img src="file:///C:/samba/wafadash/USERS/templates/signature_logo.png" alt="Signature Logo" class="signature-logo">
+        </div>
+
+        <!-- Optional Footer -->
+        <div class="footer">
+         
+        </div>
+    </div>
+</body>
+</html>

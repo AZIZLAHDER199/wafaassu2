@@ -1,0 +1,12 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+  {% if show_upload_button %}
+    <li>
+      <a href="{% url 'admin:users_'|add:cl.model._meta.model_name|add:'_upload_excel' %}" class="addlink">
+        Upload Fichier Excel
+      </a>
+    </li>
+  {% endif %}
+{% endblock %}
