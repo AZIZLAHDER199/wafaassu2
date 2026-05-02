@@ -1,81 +1,87 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronLeft, Moon, Sun, File, Clipboard, Truck, AlertCircle, FileText, Filter, X, Download, FileSpreadsheet } from 'lucide-react';
+import {
+  ChevronLeft, File, Clipboard, Truck, AlertCircle,
+  FileText, Filter, X, Download, FileSpreadsheet, RefreshCw,
+} from 'lucide-react';
+import logo from './assets/logo.png';
 
 const API_BASE_URL = '';
 
 interface FactureData {
-  id: number;
-  facture_num: string;
-  date: string;
-  billing_company?: string;
-  user?: { username: string } | null;
+  id: number; facture_num: string; date: string;
+  billing_company?: string; billing_company_name_display?: string;
   montant_ttc: number;
-  billing_company_name_display?: string; // Added for clarity
 }
-
 interface InterventionData {
-  id: number;
-  ref_dossier: string;
-  assure: string;
-  date_intervention: string;
-  evenement: string;
-  status: string;
-  cout_prestation_ttc: number;
+  id: number; ref_dossier: string; assure: string;
+  date_intervention: string; evenement: string;
+  status: string; cout_prestation_ttc: number;
 }
-
 interface SuiviCarData {
-  id: number;
-  vehicule: string;
-  date: string;
-  prix: number;
-  service: string;
-  pompiste?: string;
-  smitoStation: string; // Changed from 'station' to match backend field
+  id: number; vehicule: string; date: string;
+  prix: number; service: string; pompiste?: string; smitoStation: string;
 }
+interface MonthlyTotal { month: string; total_prix: number; }
 
-interface MonthlyTotal {
-  month: string;
-  total_prix: number;
-}
+type Tab = 'factures' | 'interventions' | 'suiviCarburant';
 
-const DataTable: React.FC<{ columns: string[]; data: any[]; isDarkMode: boolean; renderActions?: (row: any) => React.ReactNode }> = ({ columns, data, isDarkMode, renderActions }) => (
-  <div className="overflow-x-auto w-full">
-    <table className="w-full text-left min-w-[600px]">
+/* ── tiny helpers ── */
+const R = '#cc0000';
+const DARK = '#111';
+const fmt = (n: number) => `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DH`;
+
+/* ── Responsive table ── */
+const DataTable: React.FC<{
+  columns: string[];
+  data: any[];
+  renderActions?: (row: any) => React.ReactNode;
+}> = ({ columns, data, renderActions }) => (
+  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: '12px', border: '1px solid #fee2e2' }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '540px', fontSize: '.84rem' }}>
       <thead>
-        <tr className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-red-200'}`}>
+        <tr style={{ background: `linear-gradient(90deg,${DARK},#333)` }}>
           {columns.map(col => (
-            <th key={col} className={`py-3 px-4 font-medium text-xs uppercase ${isDarkMode ? 'text-gray-400' : 'text-red-600'}`}>
+            <th key={col} style={{ padding: '11px 14px', color: '#fff', fontWeight: 700, textAlign: 'left', whiteSpace: 'nowrap', fontSize: '.75rem', letterSpacing: '.4px' }}>
               {col}
             </th>
           ))}
           {renderActions && (
-            <th className={`py-3 px-4 font-medium text-xs uppercase text-right ${isDarkMode ? 'text-gray-400' : 'text-red-600'}`}>
+            <th style={{ padding: '11px 14px', color: '#fff', fontWeight: 700, textAlign: 'right', whiteSpace: 'nowrap', fontSize: '.75rem' }}>
               Actions
             </th>
           )}
         </tr>
       </thead>
       <tbody>
-        {data.length ? (
-          data.map((row, index) => (
-            <tr key={row.id || index} className={`border-b ${isDarkMode ? 'border-gray-700 hover:bg-gray-800' : 'border-red-200 hover:bg-red-50'}`}>
-              {columns.map(col => (
-                <td key={`${col}-${row.id || index}`} className={`py-3 px-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                  {col === 'Smito Station' && (!row[col] || row[col] === '') ? 'Aucune station' : row[col] || 'N/A'} {/* Handle empty smitoStation */}
-                </td>
-              ))}
-              {renderActions && (
-                <td className="py-3 px-4 text-right">
-                  {renderActions(row)}
-                </td>
-              )}
-            </tr>
-          ))
-        ) : (
+        {data.length ? data.map((row, i) => (
+          <tr key={row.id ?? i}
+            style={{ background: i % 2 === 0 ? '#fff' : '#fff5f5', borderBottom: '1px solid #fee2e2', transition: 'background .15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = '#fef2f2'}
+            onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = i % 2 === 0 ? '#fff' : '#fff5f5'}
+          >
+            {columns.map(col => (
+              <td key={`${col}-${i}`} style={{ padding: '10px 14px', color: '#111' }}>
+                {col === 'Statut' ? (
+                  <span style={{
+                    background: row[col] === 'payé' ? '#dcfce7' : '#fee2e2',
+                    color:      row[col] === 'payé' ? '#166534' : '#991b1b',
+                    padding: '2px 10px', borderRadius: '999px', fontSize: '.74rem', fontWeight: 700,
+                  }}>
+                    {row[col] || 'N/A'}
+                  </span>
+                ) : row[col] || 'N/A'}
+              </td>
+            ))}
+            {renderActions && (
+              <td style={{ padding: '10px 14px', textAlign: 'right' }}>{renderActions(row)}</td>
+            )}
+          </tr>
+        )) : (
           <tr>
-            <td colSpan={columns.length + (renderActions ? 1 : 0)} className={`text-center py-6 ${isDarkMode ? 'text-gray-400' : 'text-red-600'}`}>
+            <td colSpan={columns.length + (renderActions ? 1 : 0)}
+              style={{ padding: '36px', textAlign: 'center', color: '#9ca3af' }}>
               Aucune donnée disponible
             </td>
           </tr>
@@ -85,679 +91,370 @@ const DataTable: React.FC<{ columns: string[]; data: any[]; isDarkMode: boolean;
   </div>
 );
 
+/* ── Stat card ── */
+const StatBadge = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
+  <div style={{
+    background: '#fff', border: '1.5px solid #fee2e2',
+    borderRadius: '12px', padding: '16px 20px',
+    boxShadow: '0 2px 10px rgba(204,0,0,.07)',
+    minWidth: '140px', flex: '1 1 140px',
+  }}>
+    <div style={{ fontSize: '.7rem', color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: '4px' }}>{label}</div>
+    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: DARK }}>{value}</div>
+    {sub && <div style={{ fontSize: '.75rem', color: R, fontWeight: 600, marginTop: '2px' }}>{sub}</div>}
+  </div>
+);
+
+/* ═══════════════════════════════════════════════════ */
 const UserHistoryPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'factures' | 'interventions' | 'suiviCarburant'>('suiviCarburant');
-  const [isDarkMode, setDarkMode] = useState<boolean>(() => {
-    const storedDarkMode = localStorage.getItem('darkMode');
-    return storedDarkMode ? JSON.parse(storedDarkMode) : false;
-  });
-  const [downloadingFactureId, setDownloadingFactureId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('interventions');
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
-  const [data, setData] = useState<{
-    factures: FactureData[];
-    interventions: InterventionData[];
-    suiviCarburant: SuiviCarData[];
-  }>({
-    factures: [],
-    interventions: [],
-    suiviCarburant: [],
-  });
+  const [data, setData] = useState<{ factures: FactureData[]; interventions: InterventionData[]; suiviCarburant: SuiviCarData[] }>
+    ({ factures: [], interventions: [], suiviCarburant: [] });
 
-  const [filteredData, setFilteredData] = useState<{
-    factures: FactureData[];
-    interventions: InterventionData[];
-    suiviCarburant: SuiviCarData[];
-  }>({
-    factures: [],
-    interventions: [],
-    suiviCarburant: [],
-  });
-
+  const [filteredData, setFilteredData] = useState(data);
   const [monthlyTotals, setMonthlyTotals] = useState<MonthlyTotal[]>([]);
-
-  const [filters, setFilters] = useState<{
-    startDate: string;
-    endDate: string;
-    reference: string;
-    smitoStation: string; // Changed from 'station' to match backend
-  }>({
-    startDate: '',
-    endDate: '',
-    reference: '',
-    smitoStation: '',
-  });
-
+  const [filters, setFilters] = useState({ startDate: '', endDate: '', reference: '', smitoStation: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Liste des stations valides
   const validStations = ['AFRICA', 'TOTAL', 'SHELL', 'PETROM', 'AUCUNE'];
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      document.body.style.backgroundColor = '#221F1F';
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.style.backgroundColor = '#FFFFFF';
-    }
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
-
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Aucun token d\'authentification trouvé. Veuillez vous connecter.');
-
-      const [facturesRes, interventionsRes, suiviCarRes, monthlyTotalsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/get_factures/`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/api/get_interventions/`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/api/get_suivi_carburant/`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+      if (!token) throw new Error('Non authentifié.');
+      const [fR, iR, sR, mR] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/get_factures/`,           { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/api/get_interventions/`,      { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/api/get_suivi_carburant/`,    { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
         axios.get(`${API_BASE_URL}/api/get_suivi_carburant_stats/`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
       ]);
-
-      const parsedFactures: FactureData[] = facturesRes.data.map((f: any) => ({
-        ...f,
-        montant_ttc: parseFloat(f.montant_ttc || 0),
+      const factures: FactureData[] = fR.data.map((f: any) => ({ ...f, montant_ttc: parseFloat(f.montant_ttc || 0) }));
+      const interventions: InterventionData[] = iR.data.map((i: any) => ({ ...i, cout_prestation_ttc: parseFloat(i.cout_prestation_ttc || 0) }));
+      const suiviCarburant: SuiviCarData[] = sR.data.map((s: any) => ({
+        id: s.id, vehicule: s.vehicule || 'N/A', date: s.date || '',
+        prix: parseFloat(s.prix || 0), service: s.service || 'N/A',
+        pompiste: s.pompiste || 'N/A', smitoStation: s.smitoStation || 'AUCUNE',
       }));
-      const parsedInterventions: InterventionData[] = interventionsRes.data.map((i: any) => ({
-        ...i,
-        cout_prestation_ttc: parseFloat(i.cout_prestation_ttc || 0),
-      }));
-      const parsedSuiviCarburant: SuiviCarData[] = suiviCarRes.data.map((s: any) => ({
-        id: s.id,
-        vehicule: s.vehicule || 'N/A',
-        date: s.date || '',
-        prix: parseFloat(s.prix || 0),
-        service: s.service || 'N/A',
-        pompiste: s.pompiste || 'N/A',
-        smitoStation: s.smitoStation || 'AUCUNE', // Handle empty or invalid values
-      }));
-
-      setData({
-        factures: parsedFactures,
-        interventions: parsedInterventions,
-        suiviCarburant: parsedSuiviCarburant,
-      });
-      setFilteredData({
-        factures: parsedFactures,
-        interventions: parsedInterventions,
-        suiviCarburant: parsedSuiviCarburant,
-      });
-      setMonthlyTotals(monthlyTotalsRes.data);
+      const d = { factures, interventions, suiviCarburant };
+      setData(d); setFilteredData(d);
+      setMonthlyTotals(mR.data);
     } catch (err: any) {
-      console.error('Fetch Data Error:', err.response?.data || err);
-      setError(err.response?.data?.detail || err.message || 'Erreur réseau ou serveur indisponible. Vérifiez votre connexion.');
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
-    } finally {
-      setLoading(false);
-    }
+      setError(err.message || 'Erreur réseau.');
+      if (err.response?.status === 401) { localStorage.removeItem('token'); navigate('/login'); }
+    } finally { setLoading(false); }
   }, [navigate]);
 
-  useEffect(() => {
-    // Updated mock data with valid smitoStation values
-    const mockSuiviCarburant: SuiviCarData[] = [
-      { id: 10, vehicule: "vehicle289", date: "2025-08-09", prix: 678.00, service: "Carburant", pompiste: "mohammed", smitoStation: "AFRICA" },
-      { id: 11, vehicule: "MOD35", date: "2025-08-09", prix: 678.00, service: "Carburant", pompiste: "MOHAM", smitoStation: "TOTAL" },
-      { id: 12, vehicule: "ASO546", date: "2025-08-09", prix: 888.00, service: "Carburant", pompiste: "M3TI", smitoStation: "SHELL" },
-      { id: 5, vehicule: "DACIA", date: "2025-08-07", prix: 678.00, service: "Vidange", pompiste: "KAMIL", smitoStation: "AUCUNE" },
-      { id: 6, vehicule: "ASO546", date: "2025-08-07", prix: 677.00, service: "Carburant", pompiste: "mohammed", smitoStation: "PETROM" },
-      { id: 7, vehicule: "gd", date: "2025-08-07", prix: 400.00, service: "Carburant", pompiste: "mohammed", smitoStation: "AFRICA" },
-      { id: 8, vehicule: "GHA", date: "2025-08-07", prix: 5664.00, service: "Carburant", pompiste: "MOHAM", smitoStation: "TOTAL" },
-      { id: 9, vehicule: "ASO546rrr", date: "2025-08-07", prix: 2788.00, service: "Carburant", pompiste: "mohammed", smitoStation: "SHELL" },
-      { id: 3, vehicule: "aziz", date: "2025-08-04", prix: 253.00, service: "Carburant", pompiste: "www", smitoStation: "AUCUNE" },
-      { id: 4, vehicule: "ASO546", date: "2025-08-04", prix: 13644.00, service: "Réparation", pompiste: "M3TI", smitoStation: "PETROM" },
-    ];
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-    setData(prev => ({
-      ...prev,
-      suiviCarburant: mockSuiviCarburant,
-    }));
-    setFilteredData(prev => ({
-      ...prev,
-      suiviCarburant: mockSuiviCarburant,
-    }));
-    fetchData();
-  }, [fetchData]);
-
-  const applyClientSideFilters = useCallback(() => {
-    let filteredFactures = [...data.factures];
-    let filteredInterventions = [...data.interventions];
-    let filteredSuiviCarburant = [...data.suiviCarburant];
-
+  const applyFilters = useCallback(() => {
     const { startDate, endDate, reference, smitoStation } = filters;
-
+    let f = [...data.factures];
+    let i = [...data.interventions];
+    let s = [...data.suiviCarburant];
     if (startDate) {
-      filteredFactures = filteredFactures.filter(f => new Date(f.date) >= new Date(startDate));
-      filteredInterventions = filteredInterventions.filter(i => new Date(i.date_intervention) >= new Date(startDate));
-      filteredSuiviCarburant = filteredSuiviCarburant.filter(s => new Date(s.date) >= new Date(startDate));
+      f = f.filter(x => new Date(x.date) >= new Date(startDate));
+      i = i.filter(x => new Date(x.date_intervention) >= new Date(startDate));
+      s = s.filter(x => new Date(x.date) >= new Date(startDate));
     }
     if (endDate) {
-      filteredFactures = filteredFactures.filter(f => new Date(f.date) <= new Date(endDate));
-      filteredInterventions = filteredInterventions.filter(i => new Date(i.date_intervention) <= new Date(endDate));
-      filteredSuiviCarburant = filteredSuiviCarburant.filter(s => new Date(s.date) <= new Date(endDate));
+      f = f.filter(x => new Date(x.date) <= new Date(endDate));
+      i = i.filter(x => new Date(x.date_intervention) <= new Date(endDate));
+      s = s.filter(x => new Date(x.date) <= new Date(endDate));
     }
     if (reference) {
-      filteredFactures = filteredFactures.filter(f => f.facture_num?.toLowerCase().includes(reference.toLowerCase()));
-      filteredInterventions = filteredInterventions.filter(i => i.ref_dossier?.toLowerCase().includes(reference.toLowerCase()));
-      filteredSuiviCarburant = filteredSuiviCarburant.filter(s => s.vehicule?.toLowerCase().includes(reference.toLowerCase()));
+      f = f.filter(x => x.facture_num?.toLowerCase().includes(reference.toLowerCase()));
+      i = i.filter(x => x.ref_dossier?.toLowerCase().includes(reference.toLowerCase()));
+      s = s.filter(x => x.vehicule?.toLowerCase().includes(reference.toLowerCase()));
     }
     if (smitoStation && activeTab === 'suiviCarburant') {
-      filteredSuiviCarburant = filteredSuiviCarburant.filter(s => 
-        smitoStation === 'AUCUNE' ? !s.smitoStation || s.smitoStation === 'AUCUNE' : s.smitoStation.toLowerCase().includes(smitoStation.toLowerCase())
-      );
+      s = s.filter(x => smitoStation === 'AUCUNE' ? (!x.smitoStation || x.smitoStation === 'AUCUNE') : x.smitoStation?.toLowerCase().includes(smitoStation.toLowerCase()));
     }
-
-    setFilteredData({
-      factures: filteredFactures,
-      interventions: filteredInterventions,
-      suiviCarburant: filteredSuiviCarburant,
-    });
+    setFilteredData({ factures: f, interventions: i, suiviCarburant: s });
   }, [data, filters, activeTab]);
 
-  const applyFilters = useCallback(async () => {
-    const { startDate, endDate, reference, smitoStation } = filters;
-    setLoading(true);
-    setError(null);
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('Aucun token d\'authentification trouvé. Veuillez vous connecter.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const params = {
-        date_from: startDate,
-        date_to: endDate,
-        ref_dossier: reference,
-        smitoStation: smitoStation === 'AUCUNE' ? '' : smitoStation, // Handle AUCUNE as empty string
-      };
-
-      const [facturesRes, interventionsRes, suiviCarRes, monthlyTotalsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/get_factures/`, { headers: { Authorization: `Bearer ${token}` }, params: { date_from: startDate, date_to: endDate, societe_assistance: reference } }).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/api/get_interventions/`, { headers: { Authorization: `Bearer ${token}` }, params: { date_from: startDate, date_to: endDate, ref_dossier: reference } }).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/api/get_suivi_carburant/`, { headers: { Authorization: `Bearer ${token}` }, params }).catch(() => ({ data: [] })),
-        axios.get(`${API_BASE_URL}/api/get_suivi_carburant_stats/`, { headers: { Authorization: `Bearer ${token}` }, params: { date_from: startDate, date_to: endDate } }).catch(() => ({ data: [] })),
-      ]);
-
-      const parsedFactures: FactureData[] = facturesRes.data.map((f: any) => ({
-        ...f,
-        montant_ttc: parseFloat(f.montant_ttc || 0),
-      }));
-      const parsedInterventions: InterventionData[] = interventionsRes.data.map((i: any) => ({
-        ...i,
-        cout_prestation_ttc: parseFloat(i.cout_prestation_ttc || 0),
-      }));
-      const parsedSuiviCarburant: SuiviCarData[] = suiviCarRes.data.map((s: any) => ({
-        id: s.id,
-        vehicule: s.vehicule || 'N/A',
-        date: s.date || '',
-        prix: parseFloat(s.prix || 0),
-        service: s.service || 'N/A',
-        pompiste: s.pompiste || 'N/A',
-        smitoStation: s.smitoStation || 'AUCUNE', // Handle empty or invalid values
-      }));
-
-      setFilteredData({
-        factures: parsedFactures,
-        interventions: parsedInterventions,
-        suiviCarburant: parsedSuiviCarburant,
-      });
-      setMonthlyTotals(monthlyTotalsRes.data);
-    } catch (err: any) {
-      console.error('Apply Filters Error:', err.response?.data || err);
-      setError(err.response?.data?.detail || err.message || 'Erreur réseau ou serveur indisponible. Vérifiez votre connexion.');
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, navigate]);
-
-  const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  }, []);
-
-  const handleFilterSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (data.factures.length + data.interventions.length + data.suiviCarburant.length < 100) {
-      applyClientSideFilters();
-    } else {
-      applyFilters();
-    }
-  }, [applyClientSideFilters, applyFilters, data]);
-
-  const handleClearFilters = useCallback(() => {
+  const clearFilters = () => {
     setFilters({ startDate: '', endDate: '', reference: '', smitoStation: '' });
     setFilteredData(data);
-    setMonthlyTotals([]);
-    fetchData();
-  }, [data, fetchData]);
+  };
 
-  const toggleDarkMode = useCallback(() => setDarkMode(prev => !prev), []);
+  const handleDownload = useCallback(async (factureId: number, factureNum: string) => {
+    setDownloadingId(factureId);
+    try {
+      const token = localStorage.getItem('token')!;
+      const res = await axios.get(`${API_BASE_URL}/api/download_facture_pdf/${factureId}/`, {
+        headers: { Authorization: `Bearer ${token}` }, responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = `facture_${factureNum.replace('/', '_')}.pdf`;
+      document.body.appendChild(link); link.click();
+      document.body.removeChild(link); window.URL.revokeObjectURL(url);
+    } catch (e: any) { alert('Erreur: ' + (e.message || 'Téléchargement échoué')); }
+    finally { setDownloadingId(null); }
+  }, []);
 
-  const handleGenerateFacture = useCallback(
-    async (interventionId: number) => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('Aucun token d\'authentification trouvé. Veuillez vous connecter.');
-        navigate(`/generate-facture/${interventionId}`);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.detail || err.message || 'Erreur lors de la génération de la facture.';
-        alert(`Erreur: ${errorMessage}`);
-        console.error('Generate Facture Error:', err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          navigate('/login');
-        }
-      }
+  const exportCSV = (rows: any[], headers: string[], name: string) => {
+    if (!rows.length) { alert('Aucune donnée à exporter.'); return; }
+    const csv = 'data:text/csv;charset=utf-8,' +
+      headers.map(h => `"${h}"`).join(';') + '\n' +
+      rows.map(r => headers.map(h => `"${(r[h] || '').toString().replace(/"/g, '""')}"`).join(';')).join('\n');
+    const a = document.createElement('a');
+    a.href = encodeURI(csv); a.download = `${name}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+
+  // ── table configs ──
+  const tableConfig = {
+    factures: {
+      cols: ['N° Facture', 'Date', 'Société', 'Montant TTC'],
+      rows: filteredData.factures.map(f => ({
+        id: f.id,
+        'N° Facture': f.facture_num || 'N/A',
+        Date: f.date ? new Date(f.date).toLocaleDateString('fr-FR') : 'N/A',
+        Société: f.billing_company_name_display || f.billing_company || 'N/A',
+        'Montant TTC': fmt(f.montant_ttc),
+      })),
     },
-    [navigate]
-  );
-
-  const handleDownloadFacture = useCallback(
-    async (factureId: number, factureNum: string) => {
-      setDownloadingFactureId(factureId);
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('Token d\'authentification manquant.');
-
-        const response = await axios.get(
-          `${API_BASE_URL}/api/download_facture_pdf/${factureId}/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            responseType: 'blob',
-          }
-        );
-
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `facture_${factureNum.replace('/', '_')}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.error || err.message || 'Erreur lors du téléchargement de la facture.';
-        alert(`Erreur: ${errorMessage}`);
-        console.error('Download Facture Error:', err.response?.data || err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          navigate('/login');
-        }
-      } finally {
-        setDownloadingFactureId(null);
-      }
+    interventions: {
+      cols: ['Ref Dossier', 'Assuré', 'Date', 'Événement', 'Statut', 'Coût TTC'],
+      rows: filteredData.interventions.map(i => ({
+        id: i.id,
+        'Ref Dossier': i.ref_dossier || 'N/A',
+        Assuré: i.assure || 'N/A',
+        Date: i.date_intervention ? new Date(i.date_intervention).toLocaleDateString('fr-FR') : 'N/A',
+        Événement: i.evenement || 'N/A',
+        Statut: i.status || 'N/A',
+        'Coût TTC': fmt(i.cout_prestation_ttc || 0),
+      })),
     },
-    [navigate]
-  );
-
-  const handleExportToExcel = (data: any[], headers: string[], fileName: string) => {
-    if (!data || data.length === 0) {
-      alert("Aucune donnée à exporter.");
-      return;
-    }
-
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + headers.map(h => `"${h}"`).join(';') + '\n'
-      + data.map(row => 
-        headers.map(h => 
-          `"${(row[h] || '').toString().replace(/"/g, '""')}"`
-        ).join(';')
-      ).join('\n');
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${fileName}_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    suiviCarburant: {
+      cols: ['Véhicule', 'Date', 'Prix', 'Service', 'Pompiste', 'Station'],
+      rows: filteredData.suiviCarburant.map(s => ({
+        id: s.id,
+        Véhicule: s.vehicule,
+        Date: s.date ? new Date(s.date).toLocaleDateString('fr-FR') : 'N/A',
+        Prix: fmt(s.prix),
+        Service: s.service,
+        Pompiste: s.pompiste || 'N/A',
+        Station: s.smitoStation || 'AUCUNE',
+      })),
+    },
   };
 
-  const totalInterventions = filteredData.interventions.length;
-  const totalFactures = filteredData.factures.length;
-  const totalSuiviCarburant = filteredData.suiviCarburant.length;
-  const totalCoutInterventions = filteredData.interventions.reduce((total, i) => total + (i.cout_prestation_ttc || 0), 0);
-  const totalMontantFactures = filteredData.factures.reduce((total, f) => total + (f.montant_ttc || 0), 0);
-  const totalPrixSuivi = filteredData.suiviCarburant.reduce((total, s) => total + (s.prix || 0), 0);
-
-  const getTableColumns = (tab: string) => {
-    switch (tab) {
-      case 'interventions':
-        return ['Ref Dossier', 'Assuré', 'Date Intervention', 'Événement', 'Statut', 'Coût TTC'];
-      case 'factures':
-        return ['N° Facture', 'Date', 'Société', 'Montant TTC'];
-      case 'suiviCarburant':
-        return ['Véhicule', 'Date', 'Prix', 'Service', 'Pompiste', 'Smito Station']; // Updated column name
-      default:
-        return [];
-    }
-  };
-
-  const getTableData = (tab: string) => {
-    switch (tab) {
-      case 'interventions':
-        return filteredData.interventions.map(i => ({
-          id: i.id,
-          'Ref Dossier': i.ref_dossier || 'N/A',
-          Assuré: i.assure || 'N/A',
-          'Date Intervention': i.date_intervention ? new Date(i.date_intervention).toLocaleDateString('fr-FR') : 'N/A',
-          Événement: i.evenement || 'N/A',
-          Statut: i.status || 'N/A',
-          'Coût TTC': `${i.cout_prestation_ttc?.toFixed(2) || '0.00'} DH`,
-        }));
-      case 'factures':
-        return filteredData.factures.map(f => ({
-          id: f.id,
-          'N° Facture': f.facture_num || 'N/A',
-          Date: f.date ? new Date(f.date).toLocaleDateString('fr-FR') : 'N/A',
-          Société: f.billing_company_name_display || f.billing_company || 'N/A', // Use display name if available
-          'Montant TTC': `${f.montant_ttc?.toFixed(2) || '0.00'} DH`,
-        }));
-      case 'suiviCarburant':
-        return filteredData.suiviCarburant.map(s => ({
-          id: s.id,
-          Véhicule: s.vehicule || 'N/A',
-          Date: s.date ? new Date(s.date).toLocaleDateString('fr-FR') : 'N/A',
-          Prix: `${s.prix?.toFixed(2) || '0.00'} DH`,
-          Service: s.service || 'N/A',
-          Pompiste: s.pompiste || 'N/A',
-          'Smito Station': s.smitoStation || 'AUCUNE', // Handle empty or invalid values
-        }));
-      default:
-        return [];
-    }
-  };
-
-  const getMonthlyTotalTableData = (tab: string) => {
-    if (tab !== 'suiviCarburant') return [];
-    return monthlyTotals.map(t => ({
-      Mois: t.month,
-      'Total Prix (DH)': `${t.total_prix.toFixed(2)} DH`,
-    }));
-  };
-
-  const getTableHeaders = (tab: string) => {
-    switch (tab) {
-      case 'interventions':
-        return ['Ref Dossier', 'Assuré', 'Date Intervention', 'Événement', 'Statut', 'Coût TTC'];
-      case 'factures':
-        return ['N° Facture', 'Date', 'Société', 'Montant TTC'];
-      case 'suiviCarburant':
-        return ['Véhicule', 'Date', 'Prix', 'Service', 'Pompiste', 'Smito Station']; // Updated column name
-      default:
-        return [];
-    }
+  const totals = {
+    factures:      { count: filteredData.factures.length,      sum: filteredData.factures.reduce((a,f) => a+f.montant_ttc,0) },
+    interventions: { count: filteredData.interventions.length, sum: filteredData.interventions.reduce((a,i) => a+(i.cout_prestation_ttc||0),0) },
+    suiviCarburant:{ count: filteredData.suiviCarburant.length,sum: filteredData.suiviCarburant.reduce((a,s) => a+s.prix,0) },
   };
 
   const areFiltersActive = filters.startDate || filters.endDate || filters.reference || filters.smitoStation;
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen w-screen flex items-center justify-center ${isDarkMode ? 'bg-[#221F1F] text-white' : 'bg-white text-gray-800'}`}>
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent" />
-          <p className="ml-4 text-lg text-red-600">Chargement de l'historique...</p>
-        </div>
-      </div>
-    );
-  }
+  const tabLabels: Record<Tab, { icon: React.ReactNode; label: string }> = {
+    interventions:  { icon: <Clipboard size={15}/>, label: 'Interventions' },
+    factures:       { icon: <File size={15}/>,      label: 'Factures' },
+    suiviCarburant: { icon: <Truck size={15}/>,     label: 'Carburant' },
+  };
 
-  if (error) {
-    return (
-      <div className={`min-h-screen w-screen flex items-center justify-center ${isDarkMode ? 'bg-[#221F1F] text-white' : 'bg-white text-gray-800'}`}>
-        <div className="p-6 bg-red-100 text-red-800 rounded-lg shadow-md flex items-center gap-3">
-          <AlertCircle className="h-6 w-6" />
-          <p className="text-lg font-medium">{error}</p>
-          <button onClick={() => navigate('/login')} className="ml-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-            Aller à la connexion
-          </button>
-        </div>
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fafafa', gap: '16px' }}>
+      <div style={{ width: '48px', height: '48px', border: '4px solid #fee2e2', borderTop: `4px solid ${R}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <p style={{ color: R, fontWeight: 600 }}>Chargement de l'historique…</p>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', padding: '20px' }}>
+      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '14px', padding: '32px', maxWidth: '440px', textAlign: 'center' }}>
+        <AlertCircle size={40} color={R} style={{ marginBottom: '12px' }} />
+        <p style={{ color: '#991b1b', fontWeight: 600, marginBottom: '16px' }}>{error}</p>
+        <button onClick={fetchData} style={{ background: R, color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 22px', cursor: 'pointer', fontWeight: 700 }}>
+          Réessayer
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className={`min-h-screen w-screen ${isDarkMode ? 'bg-gradient-to-br from-red-900 to-gray-900 text-white' : 'bg-white text-gray-900'} transition-colors duration-300 flex flex-col`}>
-      <header className={`w-full px-6 py-4 flex justify-between items-center shadow-md ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex-shrink-0`}>
-        <h1 className={`text-3xl font-extrabold ${isDarkMode ? 'text-white' : 'text-gray-900'} tracking-wide`}>
-          Votre Historique d'Activités
-        </h1>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-full transition-colors duration-200 ${isDarkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            title={isDarkMode ? 'Passer au mode clair' : 'Passer au mode sombre'}
-          >
-            {isDarkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+    <div style={{ minHeight: '100vh', background: '#fafafa', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
+
+      {/* ── HEADER ── */}
+      <header style={{ background: DARK, padding: '0 clamp(16px,4vw,28px)', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 16px rgba(0,0,0,.4)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button onClick={() => navigate(-1)} style={{ background: 'rgba(204,0,0,.2)', border: '1px solid rgba(204,0,0,.4)', color: '#fff', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', whiteSpace: 'nowrap' }}>
+            <ChevronLeft size={16} /> Retour
           </button>
-          <button
-            onClick={() => navigate(-1)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 ${isDarkMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
-          >
-            <ChevronLeft className="h-5 w-5" /> Retour
-          </button>
+          <img src={logo} alt="Logo" style={{ height: '38px', objectFit: 'contain' }} />
+          <span style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(.85rem,2vw,1rem)', whiteSpace: 'nowrap' }}>Historique</span>
         </div>
+        <button onClick={fetchData} style={{ background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', color: '#ccc', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.8rem', whiteSpace: 'nowrap' }}>
+          <RefreshCw size={13} /> Actualiser
+        </button>
       </header>
 
-      <main className="p-6 flex-grow overflow-y-auto">
-        <section className={`bg-${isDarkMode ? 'gray-900' : 'white'} p-6 rounded-none shadow-xl space-y-8 h-full`}>
-          <form onSubmit={handleFilterSubmit} className={`grid grid-cols-1 md:grid-cols-5 gap-4 p-6 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} rounded-lg shadow-inner relative`}>
-            {areFiltersActive && (
-              <span className="absolute top-2 right-2 text-sm text-green-500">Filtres actifs</span>
-            )}
-            <div className="flex flex-col">
-              <label htmlFor="startDate" className={`mb-2 font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Date de début</label>
-              <input
-                id="startDate"
-                name="startDate"
-                type="date"
-                value={filters.startDate}
-                onChange={handleFilterChange}
-                className={`rounded-lg border px-4 py-3 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white hover:border-gray-600' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-500'} placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition`}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label htmlFor="endDate" className={`mb-2 font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Date de fin</label>
-              <input
-                id="endDate"
-                name="endDate"
-                type="date"
-                value={filters.endDate}
-                onChange={handleFilterChange}
-                className={`rounded-lg border px-4 py-3 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white hover:border-gray-600' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-500'} placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition`}
-              />
-            </div>
-            <div className="flex flex-col">
-              <label htmlFor="reference" className={`mb-2 font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Référence</label>
-              <input
-                id="reference"
-                name="reference"
-                type="text"
-                placeholder={activeTab === 'factures' ? 'Numéro de facture' : activeTab === 'interventions' ? 'Réf. dossier' : 'Véhicule'}
-                value={filters.reference}
-                onChange={handleFilterChange}
-                className={`rounded-lg border px-4 py-3 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white hover:border-gray-600' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-500'} placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition`}
-              />
-            </div>
-            {activeTab === 'suiviCarburant' && (
-              <div className="flex flex-col">
-                <label htmlFor="smitoStation" className={`mb-2 font-semibold ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>Smito Station</label>
-                <select
-                  id="smitoStation"
-                  name="smitoStation"
-                  value={filters.smitoStation}
-                  onChange={handleFilterChange}
-                  className={`rounded-lg border px-4 py-3 ${isDarkMode ? 'bg-gray-900 border-gray-700 text-white hover:border-gray-600' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-500'} placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition`}
-                >
-                  <option value="">Toutes les stations</option>
-                  {validStations.map(station => (
-                    <option key={station} value={station}>{station}</option>
-                  ))}
-                </select>
+      <main style={{ flex: 1, padding: 'clamp(16px,3vw,28px) clamp(12px,3vw,28px)', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+
+        {/* ── STAT CARDS ── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginBottom: '24px' }}>
+          <StatBadge label="Interventions"  value={totals.interventions.count}  sub={fmt(totals.interventions.sum)} />
+          <StatBadge label="Factures"       value={totals.factures.count}       sub={fmt(totals.factures.sum)} />
+          <StatBadge label="Suivi Carburant" value={totals.suiviCarburant.count} sub={fmt(totals.suiviCarburant.sum)} />
+        </div>
+
+        {/* ── TABS ── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px', borderBottom: '2px solid #fee2e2', paddingBottom: '0' }}>
+          {(Object.keys(tabLabels) as Tab[]).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '9px 20px', borderRadius: '10px 10px 0 0',
+                border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '.85rem',
+                background: activeTab === tab ? R : '#fff',
+                color:      activeTab === tab ? '#fff' : '#6b7280',
+                borderBottom: activeTab === tab ? `2px solid ${R}` : '2px solid transparent',
+                marginBottom: '-2px',
+                transition: 'all .15s',
+              }}
+            >
+              {tabLabels[tab].icon} {tabLabels[tab].label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── FILTER BAR ── */}
+        <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #fee2e2', marginBottom: '20px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(204,0,0,.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', cursor: 'pointer', userSelect: 'none' }} onClick={() => setFiltersOpen(o => !o)}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: DARK, fontSize: '.88rem' }}>
+              <Filter size={15} color={R} /> Filtres
+              {areFiltersActive && <span style={{ background: R, color: '#fff', borderRadius: '999px', padding: '1px 8px', fontSize: '.7rem', fontWeight: 700 }}>actifs</span>}
+            </span>
+            <span style={{ color: '#9ca3af', fontSize: '.8rem' }}>{filtersOpen ? '▲' : '▼'}</span>
+          </div>
+          {filtersOpen && (
+            <div style={{ padding: '0 18px 16px', borderTop: '1px solid #fee2e2' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: '12px', marginTop: '14px' }}>
+                {[
+                  { id: 'startDate', label: 'Date début',  type: 'date',  name: 'startDate',  val: filters.startDate },
+                  { id: 'endDate',   label: 'Date fin',    type: 'date',  name: 'endDate',    val: filters.endDate },
+                  { id: 'reference', label: activeTab === 'factures' ? 'N° Facture' : activeTab === 'interventions' ? 'Réf. dossier' : 'Véhicule', type: 'text', name: 'reference', val: filters.reference },
+                ].map(f => (
+                  <div key={f.id}>
+                    <label style={{ display: 'block', fontSize: '.72rem', fontWeight: 700, color: '#374151', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.3px' }}>{f.label}</label>
+                    <input type={f.type} value={f.val} placeholder={f.type === 'text' ? 'Rechercher...' : ''}
+                      onChange={e => setFilters(p => ({ ...p, [f.name]: e.target.value }))}
+                      style={{ width: '100%', border: '1.5px solid #fecaca', borderRadius: '8px', padding: '7px 10px', fontSize: '.85rem', color: DARK, background: '#fff5f5', outline: 'none', boxSizing: 'border-box' }}
+                      onFocus={e => (e.target.style.borderColor = R)}
+                      onBlur={e => (e.target.style.borderColor = '#fecaca')}
+                    />
+                  </div>
+                ))}
+                {activeTab === 'suiviCarburant' && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '.72rem', fontWeight: 700, color: '#374151', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.3px' }}>Station</label>
+                    <select value={filters.smitoStation} onChange={e => setFilters(p => ({ ...p, smitoStation: e.target.value }))}
+                      style={{ width: '100%', border: '1.5px solid #fecaca', borderRadius: '8px', padding: '7px 10px', fontSize: '.85rem', color: DARK, background: '#fff5f5', outline: 'none', boxSizing: 'border-box' }}>
+                      <option value="">Toutes</option>
+                      {validStations.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
-            )}
-            <div className="flex items-end gap-2">
-              <button
-                type="submit"
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 transition shadow-md font-semibold`}
-              >
-                <Filter className="h-5 w-5" /> Filtrer
-              </button>
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 ${isDarkMode ? 'border-gray-700 text-gray-200 hover:bg-gray-800' : 'border-gray-200 text-gray-700 hover:bg-gray-50'} transition font-semibold`}
-              >
-                <X className="h-5 w-5" /> Effacer
-              </button>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+                <button onClick={applyFilters} style={{ background: R, color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 20px', cursor: 'pointer', fontWeight: 700, fontSize: '.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Filter size={13} /> Appliquer
+                </button>
+                <button onClick={clearFilters} style={{ background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <X size={13} /> Effacer
+                </button>
+              </div>
             </div>
-          </form>
+          )}
+        </div>
 
-          <div className={`flex flex-wrap gap-4 mb-6 border-b pb-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            {['interventions', 'factures', 'suiviCarburant'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105 ${
-                  activeTab === tab
-                    ? 'bg-red-600 text-white shadow-lg'
-                    : isDarkMode
-                      ? 'bg-gray-800 text-gray-200 hover:bg-gray-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {tab === 'factures' && <File className="h-5 w-5" />}
-                {tab === 'interventions' && <Clipboard className="h-5 w-5" />}
-                {tab === 'suiviCarburant' && <Truck className="h-5 w-5" />}
-                {tab.charAt(0).toUpperCase() + tab.slice(1).replace(/([A-Z])/g, ' $1')}
-              </button>
-            ))}
+        {/* ── TABLE AREA ── */}
+        <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #fee2e2', overflow: 'hidden', boxShadow: '0 2px 12px rgba(204,0,0,.08)' }}>
+
+          {/* section header */}
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '8px', height: '24px', background: R, borderRadius: '4px' }} />
+              <span style={{ fontWeight: 800, color: DARK, fontSize: '1rem' }}>
+                {tabLabels[activeTab].label}
+              </span>
+              <span style={{ background: '#fee2e2', color: '#991b1b', padding: '2px 10px', borderRadius: '999px', fontSize: '.75rem', fontWeight: 700 }}>
+                {tableConfig[activeTab].rows.length}
+              </span>
+            </div>
+            <button onClick={() => exportCSV(tableConfig[activeTab].rows, tableConfig[activeTab].cols, activeTab)}
+              style={{ background: '#111', color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FileSpreadsheet size={13} /> Exporter CSV
+            </button>
           </div>
 
-          <div className="h-full">
-            {activeTab === 'factures' && (
-              <>
-                <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vos Factures</h2>
-                <DataTable
-                  columns={getTableColumns('factures')}
-                  data={getTableData('factures')}
-                  isDarkMode={isDarkMode}
-                  renderActions={(row) => (
-                    <button
-                      onClick={() => {
-                        const factureNum = row['N° Facture'];
-                        if (factureNum && factureNum !== 'N/A') {
-                          handleDownloadFacture(row.id, factureNum);
-                        } else {
-                          alert("Numéro de facture non disponible.");
-                        }
-                      }}
-                      disabled={downloadingFactureId === row.id}
-                      className={`ml-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors duration-200 ${isDarkMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
-                      title="Télécharger la Facture"
-                    >
-                      {downloadingFactureId === row.id ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block" />
-                      ) : (
-                        <Download className="h-4 w-4 inline-block mr-1" />
-                      )}
-                      {downloadingFactureId === row.id ? 'Tél.' : 'Télécharger'}
+          <div style={{ padding: '16px' }}>
+            <DataTable
+              columns={tableConfig[activeTab].cols}
+              data={tableConfig[activeTab].rows}
+              renderActions={
+                activeTab === 'interventions'
+                  ? row => (
+                    <button onClick={() => navigate(`/generate-facture/${row.id}`)}
+                      style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: '7px', padding: '5px 12px', cursor: 'pointer', fontWeight: 700, fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                      <FileText size={12} /> Facture
                     </button>
-                  )}
-                />
-                <h2 className={`text-2xl font-bold mt-8 mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Total des Factures</h2>
-                <div className={`p-4 rounded-lg border-2 ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'} shadow-md`}>
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <span className="font-bold">Nombre total de factures :</span> {totalFactures}
-                  </p>
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <span className="font-bold">Montant TTC total :</span> {totalMontantFactures.toFixed(2)} DH
-                  </p>
-                </div>
-                <div className="flex justify-end mt-4">
-                  <button onClick={() => handleExportToExcel(getTableData('factures'), getTableHeaders('factures'), 'factures')} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 ${isDarkMode ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-600 text-white hover:bg-green-700'}`}><FileSpreadsheet className="h-5 w-5" /> Exporter</button>
-                </div>
-              </>
-            )}
-            {activeTab === 'interventions' && (
-              <>
-                <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vos Interventions</h2>
-                <DataTable
-                  columns={getTableColumns('interventions')}
-                  data={getTableData('interventions')}
-                  isDarkMode={isDarkMode}
-                  renderActions={(row) => (
+                  )
+                  : activeTab === 'factures'
+                  ? row => (
                     <button
-                      onClick={() => handleGenerateFacture(row.id)}
-                      className={`ml-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors duration-200 ${isDarkMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
-                      title="Générer Facture"
-                    >
-                      <FileText className="h-4 w-4 inline-block mr-1" /> Facture
+                      onClick={() => row['N° Facture'] !== 'N/A' ? handleDownload(row.id, row['N° Facture']) : alert('Numéro non disponible.')}
+                      disabled={downloadingId === row.id}
+                      style={{ background: downloadingId === row.id ? '#fee2e2' : DARK, color: '#fff', border: 'none', borderRadius: '7px', padding: '5px 12px', cursor: 'pointer', fontWeight: 700, fontSize: '.75rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', opacity: downloadingId === row.id ? .6 : 1 }}>
+                      <Download size={12} /> {downloadingId === row.id ? 'Chargement...' : 'Télécharger'}
                     </button>
-                  )}
-                />
-                <h2 className={`text-2xl font-bold mt-8 mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Total des Interventions</h2>
-                <div className={`p-4 rounded-lg border-2 ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'} shadow-md`}>
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <span className="font-bold">Nombre total d'interventions :</span> {totalInterventions}
-                  </p>
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <span className="font-bold">Coût total des prestations :</span> {totalCoutInterventions.toFixed(2)} DH
-                  </p>
-                </div>
-                <div className="flex justify-end mt-4">
-                  <button onClick={() => handleExportToExcel(getTableData('interventions'), getTableHeaders('interventions'), 'interventions')} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 ${isDarkMode ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-600 text-white hover:bg-green-700'}`}><FileSpreadsheet className="h-5 w-5" /> Exporter</button>
-                </div>
-              </>
-            )}
-            {activeTab === 'suiviCarburant' && (
-              <>
-                <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Suivi Carburant</h2>
-                <DataTable
-                  columns={getTableColumns('suiviCarburant')}
-                  data={getTableData('suiviCarburant')}
-                  isDarkMode={isDarkMode}
-                />
-                <h2 className={`text-2xl font-bold mt-8 mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Total Prix par Mois</h2>
-                <DataTable
-                  columns={['Mois', 'Total Prix (DH)']}
-                  data={getMonthlyTotalTableData('suiviCarburant')}
-                  isDarkMode={isDarkMode}
-                />
-                <h2 className={`text-2xl font-bold mt-8 mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Total du Suivi Carburant</h2>
-                <div className={`p-4 rounded-lg border-2 ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'} shadow-md`}>
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <span className="font-bold">Nombre total de pleins :</span> {totalSuiviCarburant}
-                  </p>
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <span className="font-bold">Coût total du carburant :</span> {totalPrixSuivi.toFixed(2)} DH
-                  </p>
-                </div>
-                <div className="flex justify-end mt-4">
-                  <button onClick={() => handleExportToExcel(getTableData('suiviCarburant'), getTableHeaders('suiviCarburant'), 'suivi-carburant')} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 ${isDarkMode ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-600 text-white hover:bg-green-700'}`}><FileSpreadsheet className="h-5 w-5" /> Exporter</button>
-                </div>
-              </>
-            )}
+                  )
+                  : undefined
+              }
+            />
           </div>
-        </section>
+
+          {/* summary footer */}
+          <div style={{ padding: '12px 20px', background: '#fff5f5', borderTop: '1px solid #fee2e2', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '.8rem', color: '#6b7280' }}>
+            <span>{tableConfig[activeTab].rows.length} enregistrement{tableConfig[activeTab].rows.length !== 1 ? 's' : ''}</span>
+            <span style={{ fontWeight: 700, color: '#166534' }}>
+              Total : {fmt(
+                activeTab === 'factures'       ? totals.factures.sum :
+                activeTab === 'interventions'  ? totals.interventions.sum :
+                totals.suiviCarburant.sum
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* Monthly totals for carburant */}
+        {activeTab === 'suiviCarburant' && monthlyTotals.length > 0 && (
+          <div style={{ marginTop: '20px', background: '#fff', borderRadius: '14px', border: '1px solid #fee2e2', overflow: 'hidden', boxShadow: '0 2px 12px rgba(204,0,0,.08)' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #fee2e2', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '8px', height: '22px', background: DARK, borderRadius: '4px' }} />
+              <span style={{ fontWeight: 800, color: DARK }}>Totaux mensuels</span>
+            </div>
+            <div style={{ padding: '16px' }}>
+              <DataTable
+                columns={['Mois', 'Total Prix (DH)']}
+                data={monthlyTotals.map(t => ({ Mois: t.month, 'Total Prix (DH)': fmt(t.total_prix) }))}
+              />
+            </div>
+          </div>
+        )}
       </main>
 
-      <footer className={`text-center py-6 mt-8 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex-shrink-0`}>
-        © 2025 TAMANAR ASSISTANCE. Tous droits réservés.
+      <footer style={{ textAlign: 'center', fontSize: '.72rem', color: '#6b7280', padding: '14px', borderTop: '1px solid #e5e7eb', background: DARK, color: '#555' }}>
+        © 2025 Tamanar Assistance — Tous droits réservés
       </footer>
     </div>
   );
