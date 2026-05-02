@@ -1,6 +1,7 @@
-import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import './index.css';
+import Chatbot from './components/chatbot/Chatbot';
 import CompanySelection from './pages/userpa/CompanySelection';
 import FactureRecords from './pages/userpa/FactureRecords';
 import GenerateFacturePage from './pages/userpa/GenerateFacturePage';
@@ -14,6 +15,14 @@ import SuiviCarburantRecords from './pages/userpa/SuiviCarburantRecords';
 import UserHistoryPage from './pages/userpa/UserHistoryPage';
 import UserRoute from './pages/userpa/UserRoute';
 import Welcome from './pages/userpa/Welcome';
+
+const HIDE_CHAT_ON = ['/', '/login', '/logout'];
+
+function ChatbotGlobal() {
+  const { pathname } = useLocation();
+  if (HIDE_CHAT_ON.includes(pathname)) return null;
+  return <Chatbot />;
+}
 
 function App() {
   return (
@@ -35,6 +44,8 @@ function App() {
 
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
+
+      <ChatbotGlobal />
     </Router>
   );
 }
