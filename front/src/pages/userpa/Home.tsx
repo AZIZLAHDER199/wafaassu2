@@ -2,28 +2,53 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from './assets/logo.png';
 
-const NAV = [
-  { icon: '🚛', label: 'Interventions',    route: '/operation?type=intervention',    color: '#6366f1' },
-  { icon: '⛽', label: 'Suivi Carburant',  route: '/operation?type=suivi_carburant', color: '#0ea5e9' },
-  { icon: '📚', label: 'Historique',       route: '/userhistory',                    color: '#10b981' },
-  { icon: '📊', label: 'Statistiques',     route: '/statistics',                     color: '#f59e0b' },
-  { icon: '🧾', label: 'Factures',         route: '/facture-records',                color: '#ec4899' },
-];
-
-const QUICK = [
-  { icon: '🚛', label: 'Nouvelle intervention', route: '/operation?type=intervention',    bg: '#eef2ff', color: '#6366f1', border: '#c7d2fe' },
-  { icon: '⛽', label: 'Suivi carburant',        route: '/operation?type=suivi_carburant', bg: '#e0f2fe', color: '#0ea5e9', border: '#bae6fd' },
-  { icon: '📚', label: 'Voir historique',        route: '/userhistory',                    bg: '#ecfdf5', color: '#10b981', border: '#a7f3d0' },
-  { icon: '🧾', label: 'Registre factures',      route: '/facture-records',                bg: '#fdf2f8', color: '#ec4899', border: '#fbcfe8' },
+const CARDS = [
+  {
+    icon: '🚛',
+    title: 'Registre Intervention',
+    desc: 'Créer et gérer les interventions terrain',
+    route: '/operation?type=intervention',
+    from: '#7c3aed', to: '#a855f7',
+    shadow: 'rgba(124,58,237,.35)',
+  },
+  {
+    icon: '⛽',
+    title: 'Suivi Carburant',
+    desc: 'Suivi de la consommation carburant',
+    route: '/operation?type=suivi_carburant',
+    from: '#0369a1', to: '#0ea5e9',
+    shadow: 'rgba(3,105,161,.35)',
+  },
+  {
+    icon: '📚',
+    title: 'Historique',
+    desc: 'Consulter les opérations passées',
+    route: '/userhistory',
+    from: '#047857', to: '#10b981',
+    shadow: 'rgba(4,120,87,.35)',
+  },
+  {
+    icon: '📊',
+    title: 'Statistiques',
+    desc: 'Rapports, analyses et tableaux de bord',
+    route: '/statistics',
+    from: '#b45309', to: '#f59e0b',
+    shadow: 'rgba(180,83,9,.35)',
+  },
+  {
+    icon: '🧾',
+    title: 'Registre Factures',
+    desc: 'Consulter et exporter les factures',
+    route: '/facture-records',
+    from: '#be185d', to: '#ec4899',
+    shadow: 'rgba(190,24,93,.35)',
+  },
 ];
 
 const Home = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [sideOpen, setSideOpen] = useState(false);
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,159 +59,142 @@ const Home = () => {
 
   const handleLogout = useCallback(() => navigate('/logout'), [navigate]);
 
+  const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8faff', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
+    <div style={{ minHeight: '100vh', fontFamily: 'Segoe UI,system-ui,sans-serif', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── OVERLAY (mobile) ── */}
-      {sideOpen && (
-        <div onClick={() => setSideOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', zIndex: 40 }} />
+      {/* ── HEADER ── */}
+      <header style={{
+        background: 'linear-gradient(135deg,#1a0533 0%,#2d1060 50%,#1e3a5f 100%)',
+        padding: '0 clamp(16px,4vw,40px)',
+        height: '68px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        boxShadow: '0 4px 24px rgba(0,0,0,.3)',
+        position: 'sticky', top: 0, zIndex: 50,
+        gap: '12px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '5px 9px', boxShadow: '0 2px 12px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center' }}>
+            <img src={logo} alt="Logo" style={{ height: '42px', objectFit: 'contain' }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 900, fontSize: '1rem', color: '#fff', letterSpacing: '.8px', lineHeight: 1.1 }}>TAMANAR ASSISTANCE</div>
+            <div style={{ fontSize: '.58rem', color: '#a78bfa', letterSpacing: '2px', fontWeight: 700, textTransform: 'uppercase' }}>Tableau de bord</div>
+          </div>
+        </div>
+
+        {isAuthenticated && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: '999px', padding: '5px 14px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.82rem', fontWeight: 900, color: '#fff' }}>
+                {username?.charAt(0).toUpperCase()}
+              </div>
+              <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#e2e8f0' }}>{username}</span>
+            </div>
+            <button onClick={handleLogout}
+              style={{ background: 'rgba(239,68,68,.18)', color: '#fca5a5', border: '1px solid rgba(239,68,68,.28)', padding: '7px 16px', borderRadius: '8px', fontSize: '.8rem', fontWeight: 700, cursor: 'pointer', transition: 'all .18s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,.32)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,.18)'; }}
+            >
+              Déconnexion
+            </button>
+          </div>
+        )}
+      </header>
+
+      {/* ── HERO BANNER ── */}
+      {isAuthenticated && (
+        <div style={{
+          background: 'linear-gradient(135deg,#2d1060 0%,#1e3a5f 60%,#0f172a 100%)',
+          padding: 'clamp(30px,5vw,52px) clamp(16px,4vw,40px)',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          <div style={{ position: 'absolute', width: '340px', height: '340px', borderRadius: '50%', background: 'rgba(168,85,247,.07)', top: '-100px', right: '10%', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(14,165,233,.05)', bottom: '-60px', right: '3%', pointerEvents: 'none' }} />
+
+          <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', position: 'relative' }}>
+            <div>
+              <p style={{ margin: '0 0 5px', fontSize: '.72rem', color: '#a78bfa', letterSpacing: '2.5px', fontWeight: 700, textTransform: 'uppercase' }}>{greeting}</p>
+              <h1 style={{ margin: '0 0 8px', fontSize: 'clamp(1.5rem,4vw,2.5rem)', fontWeight: 900, color: '#fff', letterSpacing: '-.3px' }}>
+                {username} 👋
+              </h1>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '.9rem' }}>Bienvenue dans votre espace de gestion Tamanar Assistance</p>
+            </div>
+            <img src={logo} alt="" style={{ height: 'clamp(65px,10vw,110px)', objectFit: 'contain', opacity: .2, flexShrink: 0 }} />
+          </div>
+        </div>
       )}
 
-      {/* ══════════ SIDEBAR ══════════ */}
-      <aside style={{
-        width: '240px', flexShrink: 0,
-        background: 'linear-gradient(180deg,#0f172a 0%,#1e293b 100%)',
-        display: 'flex', flexDirection: 'column',
-        position: 'fixed', top: 0, left: 0, bottom: 0,
-        zIndex: 50,
-        transform: sideOpen ? 'translateX(0)' : undefined,
-        transition: 'transform .25s',
-        boxShadow: '4px 0 24px rgba(0,0,0,.18)',
-      }}
-        className="sidebar-desktop"
-      >
-        {/* Logo block */}
-        <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ background: '#fff', borderRadius: '10px', padding: '5px 7px', display: 'flex', alignItems: 'center' }}>
-              <img src={logo} alt="Logo" style={{ height: '34px', objectFit: 'contain' }} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 900, fontSize: '.82rem', color: '#fff', letterSpacing: '.6px' }}>TAMANAR</div>
-              <div style={{ fontWeight: 700, fontSize: '.7rem', color: '#6366f1', letterSpacing: '.8px' }}>ASSISTANCE</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Nav label */}
-        <div style={{ padding: '18px 18px 8px', fontSize: '.64rem', fontWeight: 700, color: '#475569', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
-          Navigation
-        </div>
-
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: '0 10px', overflow: 'auto' }}>
-          {NAV.map(n => (
-            <button key={n.label} onClick={() => navigate(n.route)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '10px', marginBottom: '3px', textAlign: 'left', transition: 'all .15s' }}
-              onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,.07)'; }}
-              onMouseLeave={e => { const b = e.currentTarget; b.style.background = 'transparent'; }}
-            >
-              <span style={{ width: '34px', height: '34px', borderRadius: '9px', background: n.color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', border: `1px solid ${n.color}30`, flexShrink: 0 }}>
-                {n.icon}
-              </span>
-              <span style={{ fontSize: '.86rem', fontWeight: 600, color: '#cbd5e1' }}>{n.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        {/* User block */}
-        <div style={{ padding: '14px 14px 20px', borderTop: '1px solid rgba(255,255,255,.07)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '.9rem', color: '#fff', flexShrink: 0 }}>
-              {username?.charAt(0).toUpperCase()}
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontWeight: 700, fontSize: '.82rem', color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{username}</div>
-              <div style={{ fontSize: '.68rem', color: '#64748b' }}>Utilisateur</div>
-            </div>
-          </div>
-          <button onClick={handleLogout}
-            style={{ width: '100%', padding: '9px', background: 'rgba(239,68,68,.12)', border: '1px solid rgba(239,68,68,.2)', borderRadius: '9px', color: '#fca5a5', fontSize: '.82rem', fontWeight: 700, cursor: 'pointer', transition: 'all .15s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,.22)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,.12)'; }}
-          >
-            🚪 Déconnexion
-          </button>
-        </div>
-      </aside>
-
-      {/* ══════════ MAIN CONTENT ══════════ */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: '240px', minHeight: '100vh' }} className="main-offset">
-
-        {/* Top bar */}
-        <header style={{ background: '#fff', borderBottom: '1px solid #e8ecf4', padding: '0 clamp(16px,3vw,28px)', height: '62px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 30, boxShadow: '0 1px 8px rgba(0,0,0,.05)', gap: '12px' }}>
-          {/* Mobile menu toggle */}
-          <button onClick={() => setSideOpen(s => !s)} className="sidebar-toggle" style={{ display: 'none', background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', fontSize: '1.1rem', color: '#475569' }}>
-            ☰
-          </button>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '.95rem', color: '#0f172a' }}>Tableau de bord</div>
-            <div style={{ fontSize: '.72rem', color: '#94a3b8', textTransform: 'capitalize' }}>{dateStr}</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8faff', border: '1px solid #e8ecf4', borderRadius: '10px', padding: '6px 14px' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '.78rem', color: '#fff' }}>
-              {username?.charAt(0).toUpperCase()}
-            </div>
-            <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#334155' }}>{username}</span>
-          </div>
-        </header>
-
-        <main style={{ flex: 1, padding: 'clamp(20px,3vw,32px) clamp(16px,3vw,28px)' }}>
-
-          {/* Welcome row */}
-          <div style={{ marginBottom: '28px' }}>
-            <h1 style={{ margin: '0 0 4px', fontSize: 'clamp(1.2rem,3vw,1.7rem)', fontWeight: 900, color: '#0f172a' }}>
-              {greeting}, {username} 👋
-            </h1>
-            <p style={{ margin: 0, color: '#64748b', fontSize: '.9rem' }}>Voici votre espace de gestion Tamanar Assistance.</p>
-          </div>
-
-          {/* Quick actions grid */}
-          <div style={{ marginBottom: '10px' }}>
-            <p style={{ margin: '0 0 14px', fontSize: '.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Actions rapides</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '14px' }}>
-              {QUICK.map(q => (
-                <button key={q.label} onClick={() => navigate(q.route)}
-                  style={{ background: '#fff', border: `1.5px solid ${q.border}`, borderRadius: '14px', padding: '20px 18px', cursor: 'pointer', textAlign: 'left', transition: 'all .18s', boxShadow: '0 1px 8px rgba(0,0,0,.05)', display: 'flex', alignItems: 'center', gap: '14px', width: '100%' }}
-                  onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(-3px)'; b.style.boxShadow = `0 8px 24px ${q.color}28`; }}
-                  onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(0)'; b.style.boxShadow = '0 1px 8px rgba(0,0,0,.05)'; }}
-                >
-                  <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: q.bg, border: `1px solid ${q.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.35rem', flexShrink: 0 }}>
-                    {q.icon}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: '.86rem', color: '#0f172a' }}>{q.label}</div>
-                    <div style={{ fontSize: '.74rem', fontWeight: 700, color: q.color, marginTop: '2px' }}>Ouvrir →</div>
-                  </div>
-                </button>
-              ))}
+      {/* ── CARDS GRID ── */}
+      {isAuthenticated && (
+        <main style={{
+          flex: 1,
+          background: 'linear-gradient(180deg,#0f172a 0%,#111827 100%)',
+          padding: 'clamp(22px,4vw,40px) clamp(16px,4vw,40px)',
+        }}>
+          <div style={{ maxWidth: '1160px', margin: '0 auto' }}>
+            <p style={{ margin: '0 0 18px', fontSize: '.68rem', fontWeight: 800, color: '#4b5563', letterSpacing: '2px', textTransform: 'uppercase' }}>Actions rapides</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '16px' }}>
+              {CARDS.map(c => <ActionCard key={c.title} {...c} onClick={() => navigate(c.route)} />)}
             </div>
           </div>
         </main>
+      )}
 
-        <footer style={{ textAlign: 'center', fontSize: '.7rem', color: '#94a3b8', padding: '12px', borderTop: '1px solid #e8ecf4', background: '#fff' }}>
-          © 2025 Tamanar Assistance — Powered by Lahderaziz
-        </footer>
-      </div>
-
-      {/* Responsive CSS */}
-      <style>{`
-        @media (min-width: 768px) {
-          .sidebar-desktop { transform: translateX(0) !important; }
-          .sidebar-toggle  { display: none !important; }
-        }
-        @media (max-width: 767px) {
-          .sidebar-desktop { transform: translateX(-100%); }
-          .sidebar-desktop.open { transform: translateX(0); }
-          .sidebar-toggle  { display: flex !important; }
-          .main-offset     { margin-left: 0 !important; }
-        }
-      `}</style>
+      <footer style={{ background: '#0f172a', borderTop: '1px solid #1e293b', textAlign: 'center', fontSize: '.7rem', color: '#374151', padding: '14px' }}>
+        © 2025 Tamanar Assistance — Powered by Lahderaziz
+      </footer>
     </div>
   );
 };
 
 export default Home;
+
+/* ── CARD ── */
+const ActionCard = ({ icon, title, desc, from, to, shadow, onClick }: {
+  icon: string; title: string; desc: string; from: string; to: string; shadow: string; onClick: () => void;
+}) => {
+  const [hov, setHov] = React.useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: hov ? `linear-gradient(135deg,${from},${to})` : '#1e293b',
+        border: `1.5px solid ${hov ? 'transparent' : '#293548'}`,
+        borderRadius: '18px',
+        padding: '22px 18px',
+        cursor: 'pointer',
+        textAlign: 'left',
+        transition: 'all .22s ease',
+        boxShadow: hov ? `0 16px 40px ${shadow}` : '0 2px 10px rgba(0,0,0,.2)',
+        transform: hov ? 'translateY(-5px)' : 'translateY(0)',
+        display: 'flex', flexDirection: 'column', gap: '14px',
+        width: '100%',
+      }}
+    >
+      <div style={{
+        width: '50px', height: '50px', borderRadius: '14px',
+        background: hov ? 'rgba(255,255,255,.18)' : `linear-gradient(135deg,${from},${to})`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '1.4rem',
+        boxShadow: hov ? 'none' : `0 4px 14px ${shadow}`,
+        flexShrink: 0,
+        transition: 'all .22s',
+      }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ fontWeight: 800, fontSize: '.9rem', color: hov ? '#fff' : '#e2e8f0', marginBottom: '5px', transition: 'color .2s' }}>{title}</div>
+        <div style={{ fontSize: '.74rem', color: hov ? 'rgba(255,255,255,.7)' : '#64748b', lineHeight: 1.55, transition: 'color .2s' }}>{desc}</div>
+      </div>
+      <div style={{ fontSize: '.74rem', fontWeight: 800, color: hov ? 'rgba(255,255,255,.85)' : from, transition: 'color .2s' }}>
+        Accéder →
+      </div>
+    </button>
+  );
+};

@@ -145,7 +145,7 @@ const Statistics: React.FC = () => {
     <div style={{ minHeight: '100vh', background: '#f0f4ff', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
 
       {/* HEADER */}
-      <header style={{ background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#1e3a5f 100%)', padding: '0 clamp(16px,4vw,36px)', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 24px rgba(0,0,0,.25)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
+      <header style={{ background: 'linear-gradient(135deg,#1a0533 0%,#2d1060 50%,#1e3a5f 100%)', padding: '0 clamp(16px,4vw,36px)', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 24px rgba(0,0,0,.25)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <button onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', color: '#e2e8f0', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem' }}>
             <ChevronLeft size={15} /> Retour

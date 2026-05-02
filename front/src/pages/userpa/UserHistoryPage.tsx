@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import {
   ChevronLeft, File, Clipboard, Truck, AlertCircle,
   FileText, Filter, X, Download, FileSpreadsheet, RefreshCw,
@@ -199,14 +200,44 @@ const UserHistoryPage: React.FC = () => {
     finally { setDownloadingId(null); }
   }, []);
 
-  const exportCSV = (rows: any[], headers: string[], name: string) => {
+  const exportExcel = (rows: any[], headers: string[], name: string) => {
     if (!rows.length) { alert('Aucune donnée à exporter.'); return; }
-    const csv = 'data:text/csv;charset=utf-8,' +
-      headers.map(h => `"${h}"`).join(';') + '\n' +
-      rows.map(r => headers.map(h => `"${(r[h] || '').toString().replace(/"/g, '""')}"`).join(';')).join('\n');
-    const a = document.createElement('a');
-    a.href = encodeURI(csv); a.download = `${name}_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `Tamanar_${name}_backup_${dateStr}.xlsx`;
+
+    const cleanRows = rows.map(r => {
+      const obj: Record<string, string | number> = {};
+      headers.forEach(h => { obj[h] = (r[h] ?? '').toString(); });
+      return obj;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(cleanRows, { header: headers });
+
+    const colWidths = headers.map(h => ({
+      wch: Math.max(h.length + 4, ...cleanRows.map(r => (r[h] ?? '').toString().length + 2)),
+    }));
+    ws['!cols'] = colWidths;
+
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (!ws[addr]) continue;
+      ws[addr].s = { font: { bold: true }, fill: { fgColor: { rgb: '2D1060' } }, font2: { color: { rgb: 'FFFFFF' } } };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31));
+
+    const meta = XLSX.utils.aoa_to_sheet([
+      ['Exporté par', 'Tamanar Assistance'],
+      ['Date export', dateStr],
+      ['Type', name],
+      ['Enregistrements', cleanRows.length],
+    ]);
+    XLSX.utils.book_append_sheet(wb, meta, 'Infos');
+
+    XLSX.writeFile(wb, filename);
   };
 
   const tableConfig = {
@@ -394,9 +425,9 @@ const UserHistoryPage: React.FC = () => {
                 {tableConfig[activeTab].rows.length}
               </span>
             </div>
-            <button onClick={() => exportCSV(tableConfig[activeTab].rows, tableConfig[activeTab].cols, activeTab)}
-              style={{ background: '#1e293b', color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', fontWeight: 600, fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <FileSpreadsheet size={12} /> Exporter CSV
+            <button onClick={() => exportExcel(tableConfig[activeTab].rows, tableConfig[activeTab].cols, activeTab)}
+              style={{ background: 'linear-gradient(135deg,#2d1060,#7c3aed)', color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 16px', cursor: 'pointer', fontWeight: 700, fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 3px 10px rgba(124,58,237,.35)' }}>
+              <FileSpreadsheet size={12} /> Exporter Excel
             </button>
           </div>
 
