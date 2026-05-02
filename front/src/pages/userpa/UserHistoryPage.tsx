@@ -317,17 +317,22 @@ const UserHistoryPage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: '#f1f5f9', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
 
       {/* ── HEADER ── */}
-      <header style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '0 clamp(16px,4vw,28px)', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 6px rgba(0,0,0,.05)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
+      <header style={{ background: 'linear-gradient(135deg,#1a0533 0%,#2d1060 50%,#1e3a5f 100%)', padding: '0 clamp(16px,4vw,28px)', height: '62px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 20px rgba(0,0,0,.25)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button onClick={() => navigate(-1)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', color: '#e2e8f0', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', whiteSpace: 'nowrap' }}>
             <ChevronLeft size={15} /> Retour
           </button>
-          <img src={logo} alt="Logo" style={{ height: '36px', objectFit: 'contain' }} />
-          <span style={{ fontWeight: 800, color: '#0f172a', fontSize: 'clamp(.85rem,2vw,.98rem)', whiteSpace: 'nowrap' }}>
+          <button onClick={() => navigate('/home')} style={{ background: 'rgba(168,85,247,.2)', border: '1px solid rgba(168,85,247,.3)', color: '#c4b5fd', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', whiteSpace: 'nowrap' }}>
+            🏠 Accueil
+          </button>
+          <div style={{ background: '#fff', borderRadius: '8px', padding: '3px 6px', display: 'flex', alignItems: 'center' }}>
+            <img src={logo} alt="Logo" style={{ height: '30px', objectFit: 'contain' }} />
+          </div>
+          <span style={{ fontWeight: 800, color: '#fff', fontSize: 'clamp(.85rem,2vw,.98rem)', whiteSpace: 'nowrap' }}>
             Historique d'activités
           </span>
         </div>
-        <button onClick={fetchData} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.8rem', whiteSpace: 'nowrap' }}>
+        <button onClick={fetchData} style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', color: '#e2e8f0', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.8rem', whiteSpace: 'nowrap' }}>
           <RefreshCw size={13} /> Actualiser
         </button>
       </header>

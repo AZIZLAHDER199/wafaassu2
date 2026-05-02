@@ -1,89 +1,70 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Settings, User, Moon, Sun, Bell, Search } from 'lucide-react'; // Icônes suggérées
+import { ChevronLeft, Home } from 'lucide-react';
 
 interface NavbarProps {
-  title: string; // Le titre de la page actuelle
-  showBackButton?: boolean; // واش نبينو زر "Retour"
-  onBackClick?: () => void; // Fonction à appeler quand on clique sur "Retour"
-  showDarkModeToggle?: boolean; // واش نبينو زر الوضع الليلي/النهاري
-  isDarkMode?: boolean; // واش رانا ف'الوضع الليلي
-  onToggleDarkMode?: () => void; // Fonction pour changer le mode
-  children?: React.ReactNode; // اقتراحات إضافية (مثل أزرار، بحث، إلخ)
+  title: string;
+  showBackButton?: boolean;
+  onBackClick?: () => void;
+  showDarkModeToggle?: boolean;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
+  children?: React.ReactNode;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
   title,
-  showBackButton = true, // Par défaut, on affiche le bouton Retour
+  showBackButton = true,
   onBackClick,
-  showDarkModeToggle = true, // Par défaut, on affiche le toggle du mode sombre
-  isDarkMode,
-  onToggleDarkMode,
-  children, // Pour les éléments additionnels
+  children,
 }) => {
   const navigate = useNavigate();
 
-  // Fonction pour gérer le clic sur le bouton Retour
   const handleBackClick = useCallback(() => {
-    if (onBackClick) {
-      onBackClick(); // Si une fonction spécifique est passée, on l'appelle
-    } else {
-      navigate(-1); // Sinon, on revient à la page précédente dans l'historique
-    }
+    if (onBackClick) onBackClick();
+    else navigate(-1);
   }, [navigate, onBackClick]);
 
   return (
-    <nav className={`w-full p-4 shadow-md z-10 
-      ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} 
-      flex items-center justify-between transition-colors duration-300`}>
-      
-      {/* Bouton Retour */}
-      <div className="flex items-center">
+    <nav style={{
+      background: 'linear-gradient(135deg,#1a0533 0%,#2d1060 50%,#1e3a5f 100%)',
+      padding: '0 clamp(14px,3vw,28px)',
+      height: '62px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      boxShadow: '0 4px 20px rgba(0,0,0,.25)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+      gap: '12px',
+      fontFamily: 'Segoe UI,system-ui,sans-serif',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {showBackButton && (
-          <button
-            onClick={handleBackClick}
-            className={`p-2 rounded-lg 
-              ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} 
-              transition-colors duration-200 flex items-center mr-4`}
-            aria-label="Retour"
+          <button onClick={handleBackClick}
+            style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', color: '#e2e8f0', borderRadius: '8px', padding: '6px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', transition: 'all .15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.18)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; }}
           >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="hidden sm:inline ml-1">Retour</span> {/* Cache le texte sur petits écrans */}
+            <ChevronLeft size={15} /> Retour
           </button>
         )}
-        
-        {/* Titre de la page */}
-        <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
-          {title}
-        </h1>
+        <button onClick={() => navigate('/home')}
+          style={{ background: 'rgba(168,85,247,.2)', border: '1px solid rgba(168,85,247,.3)', color: '#c4b5fd', borderRadius: '8px', padding: '6px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem', transition: 'all .15s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,.35)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(168,85,247,.2)'; }}
+        >
+          <Home size={14} /> Accueil
+        </button>
       </div>
 
-      {/* Boutons d'actions et suggestions */}
-      <div className="flex items-center space-x-3">
-        {children} {/* هنا فين كتحط الاقتراحات ديالك لي بغيتي تزيدها */}
+      <h1 style={{ margin: 0, fontSize: 'clamp(.88rem,2vw,1rem)', fontWeight: 800, color: '#fff', letterSpacing: '.3px', flex: 1, textAlign: 'center' }}>
+        {title}
+      </h1>
 
-        {/* Bouton Dark Mode Toggle (اقتراح) */}
-        {showDarkModeToggle && (
-          <button
-            onClick={onToggleDarkMode}
-            className={`p-2 rounded-lg 
-              ${isDarkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} 
-              transition-colors duration-200`}
-            aria-label={isDarkMode ? "Activer le mode clair" : "Activer le mode sombre"}
-          >
-            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-        )}
-
-        {/* Bouton Paramètres (اقتراح) */}
-        {/* <button 
-          className={`p-2 rounded-lg 
-            ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} 
-            transition-colors duration-200`}
-          aria-label="Paramètres"
-        >
-          <Settings className="w-5 h-5" />
-        </button> */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 'max-content' }}>
+        {children}
       </div>
     </nav>
   );

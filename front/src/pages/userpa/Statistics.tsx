@@ -150,6 +150,9 @@ const Statistics: React.FC = () => {
           <button onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', color: '#e2e8f0', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem' }}>
             <ChevronLeft size={15} /> Retour
           </button>
+          <button onClick={() => navigate('/home')} style={{ background: 'rgba(168,85,247,.2)', border: '1px solid rgba(168,85,247,.3)', color: '#c4b5fd', borderRadius: '8px', padding: '7px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem' }}>
+            🏠 Accueil
+          </button>
           <div style={{ background: '#fff', borderRadius: '10px', padding: '4px 7px', display: 'flex', alignItems: 'center' }}>
             <img src={logo} alt="" style={{ height: '36px', objectFit: 'contain' }} />
           </div>

@@ -13,12 +13,13 @@ import Statistics from './pages/userpa/Statistics';
 import SuiviCarburantRecords from './pages/userpa/SuiviCarburantRecords';
 import UserHistoryPage from './pages/userpa/UserHistoryPage';
 import UserRoute from './pages/userpa/UserRoute';
+import Welcome from './pages/userpa/Welcome';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
+        <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/home" element={<UserRoute><HomePage /></UserRoute>} />
