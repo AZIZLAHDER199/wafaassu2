@@ -1,272 +1,270 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronLeft, Moon, Sun } from 'lucide-react';
+import { ChevronLeft, TrendingUp, BarChart2, Fuel, Layers, Building2, MapPin, Truck, DollarSign, RefreshCw } from 'lucide-react';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
+  Chart as ChartJS, CategoryScale, LinearScale, BarElement,
+  LineElement, PointElement, ArcElement, Title, Tooltip, Legend,
 } from 'chart.js';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import logo from './assets/logo.png';
 
-// Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Title, Tooltip, Legend);
 
 const API_BASE_URL = '';
 
 interface StatsData {
-  interventions: { month: string; total: number }[];
-  factures: { month: string; total: number }[];
-  carburant: { month: string; total: number }[];
+  interventions:     { month: string; total: number }[];
+  factures:          { month: string; total: number }[];
+  carburant:         { month: string; total: number }[];
   interventionTypes: { evenement: string; total: number }[];
-  insuranceCompanies: { billing_company: string; total: number }[];
-  topLocations: { assure: string; total: number }[];
-  fleetConsumption: { vehicule: string; total: number }[];
-  profitLoss: { month: string; profit_loss: number }[];
+  insuranceCompanies:{ billing_company: string; total: number }[];
+  topLocations:      { assure: string; total: number }[];
+  fleetConsumption:  { vehicule: string; total: number }[];
+  profitLoss:        { month: string; profit_loss: number }[];
 }
+
+const CHART_OPTS = (title: string) => ({
+  responsive: true,
+  plugins: {
+    legend: { position: 'bottom' as const, labels: { font: { size: 11 }, color: '#475569', boxWidth: 12 } },
+    title: { display: false },
+    tooltip: { backgroundColor: '#1e293b', titleColor: '#fff', bodyColor: '#cbd5e1', padding: 10, cornerRadius: 8 },
+  },
+  scales: {
+    x: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+  },
+});
+
+const PIE_OPTS = {
+  responsive: true,
+  plugins: {
+    legend: { position: 'bottom' as const, labels: { font: { size: 11 }, color: '#475569', boxWidth: 12 } },
+  },
+};
+
+const ChartCard = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => (
+  <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 1px 8px rgba(0,0,0,.05)', overflow: 'hidden' }}>
+    <div style={{ padding: '14px 18px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {icon}
+      <span style={{ fontWeight: 700, fontSize: '.88rem', color: '#0f172a' }}>{title}</span>
+    </div>
+    <div style={{ padding: '16px' }}>{children}</div>
+  </div>
+);
 
 const Statistics: React.FC = () => {
   const navigate = useNavigate();
-  const [isDarkMode, setDarkMode] = useState<boolean>(() => {
-    const storedDarkMode = localStorage.getItem('darkMode');
-    return storedDarkMode ? JSON.parse(storedDarkMode) : false;
-  });
-  const [statsData, setStatsData] = useState<StatsData>({
-    interventions: [],
-    factures: [],
-    carburant: [],
-    interventionTypes: [],
-    insuranceCompanies: [],
-    topLocations: [],
-    fleetConsumption: [],
-    profitLoss: [],
-  });
+  const [statsData, setStatsData] = useState<StatsData>({ interventions: [], factures: [], carburant: [], interventionTypes: [], insuranceCompanies: [], topLocations: [], fleetConsumption: [], profitLoss: [] });
   const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      document.body.style.backgroundColor = '#221F1F';
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.style.backgroundColor = '#FFFFFF';
-    }
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
+  const [endDate, setEndDate]     = useState<Date | null>(null);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
 
   const fetchStats = async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw new Error('Aucun token d\'authentification trouvé.');
-
-      const params = {};
+      if (!token) throw new Error('Non authentifié.');
+      const params: Record<string, string> = {};
       if (startDate) params['date_from'] = startDate.toISOString().split('T')[0];
-      if (endDate) params['date_to'] = endDate.toISOString().split('T')[0];
+      if (endDate)   params['date_to']   = endDate.toISOString().split('T')[0];
 
-      const [
-        interventionsRes, facturesRes, carburantRes, interventionTypesRes,
-        insuranceRes, locationsRes, fleetRes, profitLossRes,
-      ] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/dashboard/interventions/monthly/`, { headers: { Authorization: `Bearer ${token}` }, params }),
-        axios.get(`${API_BASE_URL}/api/dashboard/factures/monthly/`, { headers: { Authorization: `Bearer ${token}` }, params }),
-        axios.get(`${API_BASE_URL}/api/dashboard/carburant/monthly/`, { headers: { Authorization: `Bearer ${token}` }, params }),
-        axios.get(`${API_BASE_URL}/api/dashboard/intervention_types/`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE_URL}/api/dashboard/insurance_companies/`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE_URL}/api/dashboard/top_locations/`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE_URL}/api/dashboard/fleet_consumption/`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_BASE_URL}/api/dashboard/profit_loss/`, { headers: { Authorization: `Bearer ${token}` } }),
+      const [iR, fR, cR, itR, insR, locR, flR, plR] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/dashboard/interventions/monthly/`,  { headers: { Authorization: `Bearer ${token}` }, params }),
+        axios.get(`${API_BASE_URL}/api/dashboard/factures/monthly/`,       { headers: { Authorization: `Bearer ${token}` }, params }),
+        axios.get(`${API_BASE_URL}/api/dashboard/carburant/monthly/`,      { headers: { Authorization: `Bearer ${token}` }, params }),
+        axios.get(`${API_BASE_URL}/api/dashboard/intervention_types/`,     { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE_URL}/api/dashboard/insurance_companies/`,    { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE_URL}/api/dashboard/top_locations/`,          { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE_URL}/api/dashboard/fleet_consumption/`,      { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_BASE_URL}/api/dashboard/profit_loss/`,            { headers: { Authorization: `Bearer ${token}` } }),
       ]);
-
-      setStatsData({
-        interventions: interventionsRes.data,
-        factures: facturesRes.data,
-        carburant: carburantRes.data,
-        interventionTypes: interventionTypesRes.data,
-        insuranceCompanies: insuranceRes.data,
-        topLocations: locationsRes.data,
-        fleetConsumption: fleetRes.data,
-        profitLoss: profitLossRes.data,
-      });
+      setStatsData({ interventions: iR.data, factures: fR.data, carburant: cR.data, interventionTypes: itR.data, insuranceCompanies: insR.data, topLocations: locR.data, fleetConsumption: flR.data, profitLoss: plR.data });
     } catch (err: any) {
-      console.error('Fetch Stats Error:', err.response?.data || err);
-      setError(err.response?.data?.detail || err.message || 'Erreur réseau ou serveur indisponible.');
+      setError(err.response?.data?.detail || err.message || 'Erreur réseau.');
       if (err.response?.status === 401) navigate('/login');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchStats();
-  }, [navigate, startDate, endDate]);
+  useEffect(() => { fetchStats(); }, [startDate, endDate]);
 
-  const toggleDarkMode = () => setDarkMode(prev => !prev);
-
-  // Chart Data
+  // ── chart datasets ──
   const interventionChartData = {
     labels: statsData.interventions.map(i => i.month),
-    datasets: [{ label: 'Nombre de Tdakhlat', data: statsData.interventions.map(i => i.total), borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true }],
+    datasets: [{ label: 'Interventions', data: statsData.interventions.map(i => i.total), borderColor: '#6366f1', backgroundColor: '#6366f115', fill: true, tension: .4, pointRadius: 4, pointBackgroundColor: '#6366f1' }],
   };
-
   const factureChartData = {
     labels: statsData.factures.map(f => f.month),
-    datasets: [{ label: 'Montant Total (DH)', data: statsData.factures.map(f => f.total), backgroundColor: 'rgba(255, 99, 132, 0.6)' }],
+    datasets: [{ label: 'Montant (DH)', data: statsData.factures.map(f => f.total), backgroundColor: '#ec489990', borderRadius: 6 }],
   };
-
   const carburantChartData = {
     labels: statsData.carburant.map(c => c.month),
-    datasets: [{ label: 'Coût Total (DH)', data: statsData.carburant.map(c => c.total), backgroundColor: 'rgba(54, 162, 235, 0.6)' }],
+    datasets: [{ label: 'Coût (DH)', data: statsData.carburant.map(c => c.total), backgroundColor: '#0ea5e990', borderRadius: 6 }],
   };
-
   const interventionTypeChartData = {
     labels: statsData.interventionTypes.map(t => t.evenement),
-    datasets: [{ label: 'Nbre Tdakhlat', data: statsData.interventionTypes.map(t => t.total), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] }],
+    datasets: [{ data: statsData.interventionTypes.map(t => t.total), backgroundColor: ['#6366f1','#ec4899','#f59e0b','#10b981','#0ea5e9','#8b5cf6'] }],
   };
-
   const insuranceChartData = {
     labels: statsData.insuranceCompanies.map(i => i.billing_company || 'Inconnu'),
-    datasets: [{ label: 'Nbre Tdakhlat', data: statsData.insuranceCompanies.map(i => i.total), backgroundColor: 'rgba(75, 192, 192, 0.6)' }],
+    datasets: [{ label: 'Dossiers', data: statsData.insuranceCompanies.map(i => i.total), backgroundColor: '#10b98190', borderRadius: 6 }],
   };
-
   const profitLossChartData = {
     labels: statsData.profitLoss.map(p => p.month),
-    datasets: [{
-      label: 'Profit/Loss (DH)',
-      data: statsData.profitLoss.map(p => p.profit_loss),
-      backgroundColor: statsData.profitLoss.map(p => p.profit_loss >= 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
-    }],
+    datasets: [{ label: 'Profit/Loss (DH)', data: statsData.profitLoss.map(p => p.profit_loss), backgroundColor: statsData.profitLoss.map(p => p.profit_loss >= 0 ? '#10b98190' : '#ef444490'), borderRadius: 6 }],
   };
 
-  const chartOptions = { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, color: isDarkMode ? '#ffffff' : '#000000' } } };
-
-  if (loading) {
-    return (
-      <div className={`min-h-screen w-screen flex items-center justify-center ${isDarkMode ? 'bg-[#221F1F] text-white' : 'bg-white text-gray-800'}`}>
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-600 border-t-transparent" />
-          <p className="ml-4 text-lg text-red-600">Chargement des statistiques...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={`min-h-screen w-screen flex items-center justify-center ${isDarkMode ? 'bg-[#221F1F] text-white' : 'bg-white text-gray-800'}`}>
-        <div className="p-6 bg-red-100 text-red-800 rounded-lg shadow-md flex items-center gap-3">
-          <AlertCircle className="h-6 w-6" />
-          <p className="text-lg font-medium">{error}</p>
-          <button onClick={() => navigate('/login')} className="ml-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-            Aller à la connexion
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`min-h-screen w-screen ${isDarkMode ? 'bg-gradient-to-br from-red-900 to-gray-900 text-white' : 'bg-white text-gray-900'} transition-colors duration-300 flex flex-col`}>
-      <header className={`w-full px-6 py-4 flex justify-between items-center shadow-md ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex-shrink-0`}>
-        <h1 className={`text-3xl font-extrabold ${isDarkMode ? 'text-white' : 'text-gray-900'} tracking-wide`}>
-          Statistiques
-        </h1>
-        <div className="flex items-center gap-4">
-          <button onClick={toggleDarkMode} className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
-            {isDarkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#f8faff 0%,#f1f5f9 100%)', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
+
+      {/* HEADER */}
+      <header style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '0 clamp(16px,4vw,28px)', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 6px rgba(0,0,0,.05)', position: 'sticky', top: 0, zIndex: 50, gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button onClick={() => navigate(-1)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '.82rem' }}>
+            <ChevronLeft size={15} /> Retour
           </button>
-          <button onClick={() => navigate(-1)} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${isDarkMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-600 text-white hover:bg-red-700'}`}>
-            <ChevronLeft className="h-5 w-5" /> Retour
-          </button>
+          <img src={logo} alt="" style={{ height: '36px', objectFit: 'contain' }} />
+          <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '.96rem' }}>Statistiques</span>
         </div>
+        <button onClick={fetchStats} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.8rem' }}>
+          <RefreshCw size={13} /> Actualiser
+        </button>
       </header>
 
-      <main className="p-6 flex-grow overflow-y-auto">
-        <section className={`bg-${isDarkMode ? 'gray-900' : 'white'} p-6 rounded-none shadow-xl space-y-8 h-full`}>
-          {/* Filters */}
-          <div className="flex gap-4 mb-6">
-            <DatePicker selected={startDate} onChange={(date: Date) => setStartDate(date)} placeholderText="Date de début" className="p-2 border rounded" />
-            <DatePicker selected={endDate} onChange={(date: Date) => setEndDate(date)} placeholderText="Date de fin" className="p-2 border rounded" />
-          </div>
+      <main style={{ flex: 1, padding: 'clamp(16px,3vw,28px) clamp(12px,3vw,28px)', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
 
-          {/* Vue d'ensemble */}
-          <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Vue d'ensemble</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Nombre de Tdakhlat</h3>
-              <Line data={interventionChartData} options={chartOptions} />
-            </div>
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Montant Total Factures</h3>
-              <Bar data={factureChartData} options={chartOptions} />
-            </div>
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Coût Total Carburant</h3>
-              <Bar data={carburantChartData} options={chartOptions} />
-            </div>
-          </div>
+        {/* Date filters */}
+        <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '14px 18px', marginBottom: '20px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px', boxShadow: '0 1px 6px rgba(0,0,0,.04)' }}>
+          <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.4px' }}>Période :</span>
+          <DatePicker
+            selected={startDate}
+            onChange={(d: Date | null) => setStartDate(d)}
+            placeholderText="Date de début"
+            dateFormat="dd/MM/yyyy"
+            className="stat-dp"
+          />
+          <span style={{ color: '#cbd5e1', fontWeight: 700 }}>→</span>
+          <DatePicker
+            selected={endDate}
+            onChange={(d: Date | null) => setEndDate(d)}
+            placeholderText="Date de fin"
+            dateFormat="dd/MM/yyyy"
+            className="stat-dp"
+          />
+          {(startDate || endDate) && (
+            <button onClick={() => { setStartDate(null); setEndDate(null); }} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '7px', padding: '5px 12px', cursor: 'pointer', fontSize: '.78rem', fontWeight: 600 }}>
+              Effacer
+            </button>
+          )}
+        </div>
+        <style>{`.stat-dp{border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:.84rem;color:#0f172a;background:#f8fafc;outline:none;cursor:pointer}.stat-dp:focus{border-color:#6366f1}`}</style>
 
-          {/* Analyse */}
-          <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Analyse</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Types de Tdakhlat</h3>
-              <Pie data={interventionTypeChartData} options={{ ...chartOptions, plugins: { legend: { position: 'right' } } }} />
-            </div>
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Sherkat Tamin</h3>
-              <Bar data={insuranceChartData} options={chartOptions} />
-            </div>
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Top Lieux</h3>
-              <ul className={`list-disc pl-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                {statsData.topLocations.map(loc => (
-                  <li key={loc.assure}>{loc.assure}: {loc.total}</li>
-                ))}
-              </ul>
-            </div>
+        {loading && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px', gap: '12px', color: '#64748b' }}>
+            <div style={{ width: '36px', height: '36px', border: '3px solid #e2e8f0', borderTop: '3px solid #6366f1', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            Chargement des statistiques…
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
+        )}
 
-          {/* Fleet Management */}
-          <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Gest. Asatol</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Conso. Carburant/Siyara</h3>
-              <table className="w-full text-left">
-                <thead><tr><th className="p-2 border">Véhicule</th><th className="p-2 border">Total (DH)</th></tr></thead>
-                <tbody>
-                  {statsData.fleetConsumption.map(fc => (
-                    <tr key={fc.vehicule}><td className="p-2 border">{fc.vehicule}</td><td className="p-2 border">{fc.total}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} border-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Profit/Loss</h3>
-              <Bar data={profitLossChartData} options={chartOptions} />
-            </div>
+        {error && (
+          <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '10px', padding: '14px 18px', color: '#e11d48', fontSize: '.88rem', marginBottom: '16px', fontWeight: 600 }}>
+            ⚠ {error}
           </div>
-        </section>
+        )}
+
+        {!loading && !error && (
+          <>
+            {/* Section: Vue d'ensemble */}
+            <SectionTitle>Vue d'ensemble</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: '16px', marginBottom: '24px' }}>
+              <ChartCard title="Nombre d'interventions / mois" icon={<TrendingUp size={15} color="#6366f1" />}>
+                <Line data={interventionChartData} options={CHART_OPTS('Interventions')} />
+              </ChartCard>
+              <ChartCard title="Montant total factures / mois" icon={<BarChart2 size={15} color="#ec4899" />}>
+                <Bar data={factureChartData} options={CHART_OPTS('Factures')} />
+              </ChartCard>
+              <ChartCard title="Coût carburant / mois" icon={<Fuel size={15} color="#0ea5e9" />}>
+                <Bar data={carburantChartData} options={CHART_OPTS('Carburant')} />
+              </ChartCard>
+            </div>
+
+            {/* Section: Analyse */}
+            <SectionTitle>Analyse</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: '16px', marginBottom: '24px' }}>
+              <ChartCard title="Types d'interventions" icon={<Layers size={15} color="#f59e0b" />}>
+                {statsData.interventionTypes.length ? <Pie data={interventionTypeChartData} options={PIE_OPTS} /> : <Empty />}
+              </ChartCard>
+              <ChartCard title="Sociétés d'assurance" icon={<Building2 size={15} color="#10b981" />}>
+                {statsData.insuranceCompanies.length ? <Bar data={insuranceChartData} options={CHART_OPTS('Assurance')} /> : <Empty />}
+              </ChartCard>
+              <ChartCard title="Top lieux d'intervention" icon={<MapPin size={15} color="#8b5cf6" />}>
+                {statsData.topLocations.length ? (
+                  <ul style={{ margin: 0, padding: '0 0 0 16px', listStyle: 'none' }}>
+                    {statsData.topLocations.map((loc, i) => (
+                      <li key={loc.assure} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < statsData.topLocations.length - 1 ? '1px solid #f1f5f9' : 'none', fontSize: '.85rem', color: '#334155' }}>
+                        <span>{loc.assure}</span>
+                        <span style={{ fontWeight: 700, color: '#8b5cf6' }}>{loc.total}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <Empty />}
+              </ChartCard>
+            </div>
+
+            {/* Section: Flotte */}
+            <SectionTitle>Gestion flotte</SectionTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: '16px' }}>
+              <ChartCard title="Consommation carburant / véhicule" icon={<Truck size={15} color="#0ea5e9" />}>
+                {statsData.fleetConsumption.length ? (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem' }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                          <th style={{ padding: '9px 12px', textAlign: 'left', color: '#64748b', fontWeight: 700, fontSize: '.73rem', textTransform: 'uppercase' }}>Véhicule</th>
+                          <th style={{ padding: '9px 12px', textAlign: 'right', color: '#64748b', fontWeight: 700, fontSize: '.73rem', textTransform: 'uppercase' }}>Total (DH)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {statsData.fleetConsumption.map((fc, i) => (
+                          <tr key={fc.vehicule} style={{ background: i % 2 === 0 ? '#fff' : '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '8px 12px', color: '#334155' }}>{fc.vehicule}</td>
+                            <td style={{ padding: '8px 12px', color: '#0ea5e9', fontWeight: 700, textAlign: 'right' }}>{Number(fc.total).toLocaleString('fr-FR')} DH</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <Empty />}
+              </ChartCard>
+              <ChartCard title="Profit / Perte mensuel" icon={<DollarSign size={15} color="#10b981" />}>
+                {statsData.profitLoss.length ? <Bar data={profitLossChartData} options={CHART_OPTS('Profit')} /> : <Empty />}
+              </ChartCard>
+            </div>
+          </>
+        )}
       </main>
 
-      <footer className={`text-center py-6 mt-8 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        © 2025 TAMANAR ASSISTANCE. Tous droits réservés.
+      <footer style={{ textAlign: 'center', fontSize: '.72rem', color: '#94a3b8', padding: '14px', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
+        © 2025 Tamanar Assistance — Tous droits réservés
       </footer>
     </div>
   );
 };
+
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+    <div style={{ width: '4px', height: '20px', background: '#6366f1', borderRadius: '4px' }} />
+    <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>{children}</h2>
+  </div>
+);
+
+const Empty = () => (
+  <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '.84rem', padding: '24px 0', margin: 0 }}>Aucune donnée disponible</p>
+);
 
 export default Statistics;
