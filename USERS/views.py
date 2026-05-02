@@ -24,7 +24,10 @@ from decimal import Decimal
 # NEW IMPORTS for xhtml2pdf
 from django.template.loader import get_template
 from io import BytesIO
-from xhtml2pdf import pisa
+try:
+    from xhtml2pdf import pisa
+except ImportError:
+    pisa = None
 from datetime import date, datetime # For date.today() and datetime parsing
 from django.core.files.base import ContentFile # For saving PDF to FileField
 from django.conf import settings # To access static files
