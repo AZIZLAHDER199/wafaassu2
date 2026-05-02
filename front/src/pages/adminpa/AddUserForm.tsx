@@ -33,7 +33,7 @@ const AddUserForm: React.FC = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/add_user/', formData, {
+      const response = await axios.post('/api/add_user/', formData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,

@@ -40,11 +40,11 @@ const InterventionRecords: React.FC = () => {
     }
 
     const fetchInterventions = async () => {
-      console.log('Fetching interventions from:', 'http://localhost:8000/api/get_interventions/');
+      console.log('Fetching interventions from:', '/api/get_interventions/');
       setLoading(true);
       setError(null);
       try {
-        const url = new URL('http://localhost:8000/api/get_interventions/');
+        const url = new URL('/api/get_interventions/');
         if (filterStatus) url.searchParams.append('status', filterStatus);
         if (filterDateFrom) url.searchParams.append('date_from', filterDateFrom);
         console.log('Fetch URL:', url.toString());
@@ -111,7 +111,7 @@ const InterventionRecords: React.FC = () => {
       return null;
     }
     try {
-      const response = await fetch('http://localhost:8000/api/token/refresh/', {
+      const response = await fetch('/api/token/refresh/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh }),
@@ -151,7 +151,7 @@ const InterventionRecords: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/intervention/${id}/`, {
+      const response = await fetch(`/api/intervention/${id}/`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

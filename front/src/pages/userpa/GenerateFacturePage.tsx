@@ -4,7 +4,7 @@ import axios from 'axios';
 import { AlertCircle, Download, ChevronLeft, Eye, FileText, Calendar, Building, MapPin, DollarSign, List, Info, Printer } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = '';
 
 interface InterventionData {
   id: number;

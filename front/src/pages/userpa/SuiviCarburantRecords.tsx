@@ -30,7 +30,7 @@ const SuiviCarburantRecords: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/api/get_suivi_carburant/', {
+      const response = await fetch('/api/get_suivi_carburant/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ const SuiviCarburantRecords: React.FC = () => {
       return null;
     }
     try {
-      const response = await fetch('http://localhost:8000/api/token/refresh/', {
+      const response = await fetch('/api/token/refresh/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh }),
@@ -104,7 +104,7 @@ const SuiviCarburantRecords: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/suivi_carburant/${id}/`, {
+      const response = await fetch(`/api/suivi_carburant/${id}/`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

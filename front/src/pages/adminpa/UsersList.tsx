@@ -11,7 +11,7 @@ const UsersList: React.FC = () => {
 
   // Fetch users from backend (replace URL with your API)
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/users/")
+    fetch("/api/users/")
       .then((res) => res.json())
       .then((data) => setUsers(data))
       .catch((err) => console.error("Error fetching users:", err));

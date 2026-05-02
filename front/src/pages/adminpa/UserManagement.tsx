@@ -31,7 +31,7 @@ const UserManagement: React.FC = () => {
 
     const checkAdminStatus = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/apilogin/', {
+        const response = await fetch('/api/apilogin/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ const UserManagement: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/api/get_users/', {
+      const response = await fetch('/api/get_users/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ const UserManagement: React.FC = () => {
       return null;
     }
     try {
-      const response = await fetch('http://localhost:8000/api/token/refresh/', {
+      const response = await fetch('/api/token/refresh/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh }),
@@ -122,7 +122,7 @@ const UserManagement: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/add_user/', {
+      const response = await fetch('/api/add_user/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ const UserManagement: React.FC = () => {
         if (response.status === 401) {
           const newToken = await refreshToken();
           if (newToken) {
-            return fetch('http://localhost:8000/api/add_user/', {
+            return fetch('/api/add_user/', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ const UserManagement: React.FC = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/user/${id}/`, {
+      const response = await fetch(`/api/user/${id}/`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +215,7 @@ const UserManagement: React.FC = () => {
     };
 
     try {
-      const response = await fetch(`http://localhost:8000/api/user/${selectedUser.id}/`, {
+      const response = await fetch(`/api/user/${selectedUser.id}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -228,7 +228,7 @@ const UserManagement: React.FC = () => {
         if (response.status === 401) {
           const newToken = await refreshToken();
           if (newToken) {
-            return fetch(`http://localhost:8000/api/user/${selectedUser.id}/`, {
+            return fetch(`/api/user/${selectedUser.id}/`, {
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',

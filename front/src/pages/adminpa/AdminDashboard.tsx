@@ -226,7 +226,7 @@ const AdminDashboard: React.FC = () => {
       return null;
     }
     try {
-      const response = await fetch("http://localhost:8000/api/token/refresh/", {
+      const response = await fetch("/api/token/refresh/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh }),
@@ -264,14 +264,14 @@ const AdminDashboard: React.FC = () => {
       try {
         if (location.pathname === "/admin") {
           const [usersRes, statsRes] = await Promise.all([
-            fetch("http://localhost:8000/api/get_users/", {
+            fetch("/api/get_users/", {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
             }),
-            fetch("http://localhost:8000/api/get_signup_stats/", {
+            fetch("/api/get_signup_stats/", {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
@@ -290,7 +290,7 @@ const AdminDashboard: React.FC = () => {
           setUsers(await usersRes.json());
           setSignupData(await statsRes.json());
         } else if (location.pathname === "/users" || location.pathname === "/adduser" || location.pathname.startsWith("/edit-user/")) {
-          const usersRes = await fetch("http://localhost:8000/api/get_users/", {
+          const usersRes = await fetch("/api/get_users/", {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -307,28 +307,28 @@ const AdminDashboard: React.FC = () => {
           setUsers(await usersRes.json());
         } else if (location.pathname === "/adminhistory") {
           const [adminLogsRes, facturesRes, interventionsRes, suiviCarburantRes] = await Promise.all([
-            fetch("http://localhost:8000/api/admin_history/", {
+            fetch("/api/admin_history/", {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
             }),
-            fetch("http://localhost:8000/api/get_factures/", {
+            fetch("/api/get_factures/", {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
             }),
-            fetch("http://localhost:8000/api/get_interventions/", {
+            fetch("/api/get_interventions/", {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
             }),
-            fetch("http://localhost:8000/api/get_suivi_carburant/", {
+            fetch("/api/get_suivi_carburant/", {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
@@ -395,13 +395,13 @@ const AdminDashboard: React.FC = () => {
         let url = "";
         switch (type) {
           case "facture":
-            url = `http://localhost:8000/api/facture/detail/${id}/`; // Matches backend /api/facture/detail/<int:pk>/
+            url = `/api/facture/detail/${id}/`; // Matches backend /api/facture/detail/<int:pk>/
             break;
           case "intervention":
-            url = `http://localhost:8000/api/intervention/${id}/`; // Matches backend /api/intervention/<int:pk>/
+            url = `/api/intervention/${id}/`; // Matches backend /api/intervention/<int:pk>/
             break;
           case "suivi_carburant":
-            url = `http://localhost:8000/api/suivi_carburant/${id}/`; // Matches backend /api/suivi_carburant/<int:pk>/
+            url = `/api/suivi_carburant/${id}/`; // Matches backend /api/suivi_carburant/<int:pk>/
             break;
           default:
             throw new Error("Unknown record type");
@@ -484,19 +484,19 @@ const AdminDashboard: React.FC = () => {
       let url = "";
       switch (type) {
         case "user":
-          url = `http://localhost:8000/api/user/${id}/`;
+          url = `/api/user/${id}/`;
           break;
         case "admin_log":
-          url = `http://localhost:8000/api/admin_history/${id}/`;
+          url = `/api/admin_history/${id}/`;
           break;
         case "facture":
-          url = `http://localhost:8000/api/facture/${id}/`;
+          url = `/api/facture/${id}/`;
           break;
         case "intervention":
-          url = `http://localhost:8000/api/intervention/${id}/`;
+          url = `/api/intervention/${id}/`;
           break;
         case "suivi_carburant":
-          url = `http://localhost:8000/api/suivi_carburant/${id}/`;
+          url = `/api/suivi_carburant/${id}/`;
           break;
         default:
           throw new Error("Unknown data type for deletion");
@@ -564,13 +564,13 @@ const AdminDashboard: React.FC = () => {
 
       if (isFacture(selectedRecord)) {
         type = "facture";
-        url = `http://localhost:8000/api/facture/${selectedRecord.id ? selectedRecord.id + "/" : ""}`;
+        url = `/api/facture/${selectedRecord.id ? selectedRecord.id + "/" : ""}`;
       } else if (isIntervention(selectedRecord)) {
         type = "intervention";
-        url = `http://localhost:8000/api/intervention/${selectedRecord.id ? selectedRecord.id + "/" : ""}`;
+        url = `/api/intervention/${selectedRecord.id ? selectedRecord.id + "/" : ""}`;
       } else if (isSuiviCarburant(selectedRecord)) {
         type = "suivi_carburant";
-        url = `http://localhost:8000/api/suivi_carburant/${selectedRecord.id ? selectedRecord.id + "/" : ""}`;
+        url = `/api/suivi_carburant/${selectedRecord.id ? selectedRecord.id + "/" : ""}`;
       } else {
         throw new Error("Unknown record type");
       }

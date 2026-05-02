@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Moon, Sun, File, Clipboard, Truck, AlertCircle, FileText, Filter, X, Download, FileSpreadsheet } from 'lucide-react';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = '';
 
 interface FactureData {
   id: number;

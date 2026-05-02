@@ -6,7 +6,7 @@ import './Login.css';
 import logo from './assets/logo.png';
 
 // The API URL is now hardcoded for localhost
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = '';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');

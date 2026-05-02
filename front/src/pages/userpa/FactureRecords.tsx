@@ -30,7 +30,7 @@ const FactureRecords: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/api/get_factures/', {
+      const response = await fetch('/api/get_factures/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ const FactureRecords: React.FC = () => {
       return null;
     }
     try {
-      const response = await fetch('http://localhost:8000/api/token/refresh/', {
+      const response = await fetch('/api/token/refresh/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh }),
@@ -104,7 +104,7 @@ const FactureRecords: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/facture/${id}/`, {
+      const response = await fetch(`/api/facture/${id}/`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ const FactureRecords: React.FC = () => {
     formData.append('montant', facture.montant_ttc?.toString() || '0');
 
     try {
-      const response = await fetch('http://localhost:8000/generate_facture_pdf/', {
+      const response = await fetch('/generate_facture_pdf/', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

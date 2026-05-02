@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (token) {
       // Verify token with Django backend
       axios
-        .get('http://127.0.0.1:8000/api/verify-token/', {
+        .get('/api/verify-token/', {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then(response => {
