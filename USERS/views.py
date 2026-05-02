@@ -488,7 +488,12 @@ def get_signup_stats(request):
         })
     return Response(formatted_stats)
 
-class SocieteAssistanceList(generics.ListAPIView):
+class SocieteAssistanceList(generics.ListCreateAPIView):
+    queryset = SocieteAssistance.objects.all()
+    serializer_class = SocieteAssistanceSerializer
+    permission_classes = [IsAuthenticated]
+
+class SocieteAssistanceDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = SocieteAssistance.objects.all()
     serializer_class = SocieteAssistanceSerializer
     permission_classes = [IsAuthenticated]
