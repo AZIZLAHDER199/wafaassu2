@@ -2,53 +2,28 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from './assets/logo.png';
 
-const CARDS = [
-  {
-    icon: '🚛',
-    title: 'Registre Intervention',
-    desc: 'Créer et gérer les interventions',
-    route: '/operation?type=intervention',
-    gradient: 'linear-gradient(135deg,#6366f1,#818cf8)',
-    shadow: 'rgba(99,102,241,.4)',
-  },
-  {
-    icon: '⛽',
-    title: 'Suivi Carburant',
-    desc: 'Suivi de la consommation carburant',
-    route: '/operation?type=suivi_carburant',
-    gradient: 'linear-gradient(135deg,#0ea5e9,#38bdf8)',
-    shadow: 'rgba(14,165,233,.4)',
-  },
-  {
-    icon: '📚',
-    title: 'Historique',
-    desc: 'Consulter les opérations passées',
-    route: '/userhistory',
-    gradient: 'linear-gradient(135deg,#10b981,#34d399)',
-    shadow: 'rgba(16,185,129,.4)',
-  },
-  {
-    icon: '📊',
-    title: 'Statistiques',
-    desc: 'Rapports et analyses',
-    route: '/statistics',
-    gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)',
-    shadow: 'rgba(245,158,11,.4)',
-  },
-  {
-    icon: '🧾',
-    title: 'Registre Factures',
-    desc: 'Consulter et exporter les factures',
-    route: '/facture-records',
-    gradient: 'linear-gradient(135deg,#ec4899,#f472b6)',
-    shadow: 'rgba(236,72,153,.4)',
-  },
+const NAV = [
+  { icon: '🚛', label: 'Interventions',    route: '/operation?type=intervention',    color: '#6366f1' },
+  { icon: '⛽', label: 'Suivi Carburant',  route: '/operation?type=suivi_carburant', color: '#0ea5e9' },
+  { icon: '📚', label: 'Historique',       route: '/userhistory',                    color: '#10b981' },
+  { icon: '📊', label: 'Statistiques',     route: '/statistics',                     color: '#f59e0b' },
+  { icon: '🧾', label: 'Factures',         route: '/facture-records',                color: '#ec4899' },
+];
+
+const QUICK = [
+  { icon: '🚛', label: 'Nouvelle intervention', route: '/operation?type=intervention',    bg: '#eef2ff', color: '#6366f1', border: '#c7d2fe' },
+  { icon: '⛽', label: 'Suivi carburant',        route: '/operation?type=suivi_carburant', bg: '#e0f2fe', color: '#0ea5e9', border: '#bae6fd' },
+  { icon: '📚', label: 'Voir historique',        route: '/userhistory',                    bg: '#ecfdf5', color: '#10b981', border: '#a7f3d0' },
+  { icon: '🧾', label: 'Registre factures',      route: '/facture-records',                bg: '#fdf2f8', color: '#ec4899', border: '#fbcfe8' },
 ];
 
 const Home = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sideOpen, setSideOpen] = useState(false);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -59,111 +34,159 @@ const Home = () => {
 
   const handleLogout = useCallback(() => navigate('/logout'), [navigate]);
 
+  const hour = now.getHours();
+  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f4ff', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8faff', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
 
-      {/* ── HEADER ── */}
-      <header style={{
-        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#1e3a5f 100%)',
-        padding: '0 clamp(16px,4vw,36px)',
-        height: '70px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        boxShadow: '0 4px 24px rgba(0,0,0,.25)',
-        position: 'sticky', top: 0, zIndex: 50, gap: '12px',
-      }}>
-        {/* Logo + brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ background: '#fff', borderRadius: '12px', padding: '5px 8px', boxShadow: '0 2px 10px rgba(0,0,0,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={logo} alt="Logo" style={{ height: '40px', objectFit: 'contain' }} />
-          </div>
-          <div>
-            <div style={{ fontWeight: 900, fontSize: '1rem', color: '#fff', letterSpacing: '.8px' }}>TAMANAR ASSISTANCE</div>
-            <div style={{ fontSize: '.6rem', color: '#94a3b8', letterSpacing: '2px', fontWeight: 600, textTransform: 'uppercase' }}>Tableau de bord</div>
-          </div>
-        </div>
-
-        {/* User actions */}
-        {isAuthenticated && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '999px', padding: '5px 14px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.8rem', fontWeight: 800, color: '#fff' }}>
-                {username?.charAt(0).toUpperCase()}
-              </div>
-              <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#e2e8f0' }}>{username}</span>
-            </div>
-            <button onClick={handleLogout} style={{ background: 'rgba(239,68,68,.2)', color: '#fca5a5', border: '1px solid rgba(239,68,68,.3)', padding: '7px 16px', borderRadius: '8px', fontSize: '.8rem', fontWeight: 700, cursor: 'pointer', transition: 'all .2s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,.35)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,.2)'; }}
-            >
-              Déconnexion
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* ── HERO BANNER ── */}
-      {isAuthenticated && (
-        <div style={{
-          background: 'linear-gradient(135deg,#1e293b 0%,#1e3a5f 50%,#312e81 100%)',
-          padding: 'clamp(28px,5vw,48px) clamp(16px,4vw,36px)',
-          position: 'relative', overflow: 'hidden',
-        }}>
-          {/* decorative circles */}
-          <div style={{ position: 'absolute', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(99,102,241,.08)', top: '-80px', right: '15%', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(14,165,233,.06)', bottom: '-60px', right: '5%', pointerEvents: 'none' }} />
-
-          <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative' }}>
-            <div>
-              <p style={{ margin: '0 0 6px', fontSize: '.75rem', color: '#94a3b8', letterSpacing: '2px', fontWeight: 700, textTransform: 'uppercase' }}>Bienvenue</p>
-              <h1 style={{ margin: '0 0 8px', fontSize: 'clamp(1.5rem,4vw,2.4rem)', fontWeight: 900, color: '#fff', letterSpacing: '-.3px' }}>
-                {username} 👋
-              </h1>
-              <p style={{ margin: 0, color: '#94a3b8', fontSize: '.92rem' }}>Choisissez une opération pour commencer</p>
-            </div>
-            {/* Big logo in hero */}
-            <img src={logo} alt="" style={{ height: 'clamp(60px,10vw,100px)', objectFit: 'contain', opacity: .35, flexShrink: 0 }} />
-          </div>
-        </div>
+      {/* ── OVERLAY (mobile) ── */}
+      {sideOpen && (
+        <div onClick={() => setSideOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', zIndex: 40 }} />
       )}
 
-      {/* ── CARDS ── */}
-      {isAuthenticated && (
-        <main style={{ flex: 1, padding: 'clamp(20px,4vw,36px) clamp(16px,4vw,36px)', maxWidth: '1180px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-          <p style={{ fontSize: '.75rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '16px' }}>Actions rapides</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(210px,1fr))', gap: '18px' }}>
-            {CARDS.map(c => <ActionCard key={c.title} {...c} onClick={() => navigate(c.route)} />)}
+      {/* ══════════ SIDEBAR ══════════ */}
+      <aside style={{
+        width: '240px', flexShrink: 0,
+        background: 'linear-gradient(180deg,#0f172a 0%,#1e293b 100%)',
+        display: 'flex', flexDirection: 'column',
+        position: 'fixed', top: 0, left: 0, bottom: 0,
+        zIndex: 50,
+        transform: sideOpen ? 'translateX(0)' : undefined,
+        transition: 'transform .25s',
+        boxShadow: '4px 0 24px rgba(0,0,0,.18)',
+      }}
+        className="sidebar-desktop"
+      >
+        {/* Logo block */}
+        <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: '#fff', borderRadius: '10px', padding: '5px 7px', display: 'flex', alignItems: 'center' }}>
+              <img src={logo} alt="Logo" style={{ height: '34px', objectFit: 'contain' }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 900, fontSize: '.82rem', color: '#fff', letterSpacing: '.6px' }}>TAMANAR</div>
+              <div style={{ fontWeight: 700, fontSize: '.7rem', color: '#6366f1', letterSpacing: '.8px' }}>ASSISTANCE</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav label */}
+        <div style={{ padding: '18px 18px 8px', fontSize: '.64rem', fontWeight: 700, color: '#475569', letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+          Navigation
+        </div>
+
+        {/* Nav items */}
+        <nav style={{ flex: 1, padding: '0 10px', overflow: 'auto' }}>
+          {NAV.map(n => (
+            <button key={n.label} onClick={() => navigate(n.route)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '10px', marginBottom: '3px', textAlign: 'left', transition: 'all .15s' }}
+              onMouseEnter={e => { const b = e.currentTarget; b.style.background = 'rgba(255,255,255,.07)'; }}
+              onMouseLeave={e => { const b = e.currentTarget; b.style.background = 'transparent'; }}
+            >
+              <span style={{ width: '34px', height: '34px', borderRadius: '9px', background: n.color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', border: `1px solid ${n.color}30`, flexShrink: 0 }}>
+                {n.icon}
+              </span>
+              <span style={{ fontSize: '.86rem', fontWeight: 600, color: '#cbd5e1' }}>{n.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* User block */}
+        <div style={{ padding: '14px 14px 20px', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '.9rem', color: '#fff', flexShrink: 0 }}>
+              {username?.charAt(0).toUpperCase()}
+            </div>
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{ fontWeight: 700, fontSize: '.82rem', color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{username}</div>
+              <div style={{ fontSize: '.68rem', color: '#64748b' }}>Utilisateur</div>
+            </div>
+          </div>
+          <button onClick={handleLogout}
+            style={{ width: '100%', padding: '9px', background: 'rgba(239,68,68,.12)', border: '1px solid rgba(239,68,68,.2)', borderRadius: '9px', color: '#fca5a5', fontSize: '.82rem', fontWeight: 700, cursor: 'pointer', transition: 'all .15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,.22)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,.12)'; }}
+          >
+            🚪 Déconnexion
+          </button>
+        </div>
+      </aside>
+
+      {/* ══════════ MAIN CONTENT ══════════ */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: '240px', minHeight: '100vh' }} className="main-offset">
+
+        {/* Top bar */}
+        <header style={{ background: '#fff', borderBottom: '1px solid #e8ecf4', padding: '0 clamp(16px,3vw,28px)', height: '62px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 30, boxShadow: '0 1px 8px rgba(0,0,0,.05)', gap: '12px' }}>
+          {/* Mobile menu toggle */}
+          <button onClick={() => setSideOpen(s => !s)} className="sidebar-toggle" style={{ display: 'none', background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', fontSize: '1.1rem', color: '#475569' }}>
+            ☰
+          </button>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '.95rem', color: '#0f172a' }}>Tableau de bord</div>
+            <div style={{ fontSize: '.72rem', color: '#94a3b8', textTransform: 'capitalize' }}>{dateStr}</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8faff', border: '1px solid #e8ecf4', borderRadius: '10px', padding: '6px 14px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '.78rem', color: '#fff' }}>
+              {username?.charAt(0).toUpperCase()}
+            </div>
+            <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#334155' }}>{username}</span>
+          </div>
+        </header>
+
+        <main style={{ flex: 1, padding: 'clamp(20px,3vw,32px) clamp(16px,3vw,28px)' }}>
+
+          {/* Welcome row */}
+          <div style={{ marginBottom: '28px' }}>
+            <h1 style={{ margin: '0 0 4px', fontSize: 'clamp(1.2rem,3vw,1.7rem)', fontWeight: 900, color: '#0f172a' }}>
+              {greeting}, {username} 👋
+            </h1>
+            <p style={{ margin: 0, color: '#64748b', fontSize: '.9rem' }}>Voici votre espace de gestion Tamanar Assistance.</p>
+          </div>
+
+          {/* Quick actions grid */}
+          <div style={{ marginBottom: '10px' }}>
+            <p style={{ margin: '0 0 14px', fontSize: '.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1.5px' }}>Actions rapides</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '14px' }}>
+              {QUICK.map(q => (
+                <button key={q.label} onClick={() => navigate(q.route)}
+                  style={{ background: '#fff', border: `1.5px solid ${q.border}`, borderRadius: '14px', padding: '20px 18px', cursor: 'pointer', textAlign: 'left', transition: 'all .18s', boxShadow: '0 1px 8px rgba(0,0,0,.05)', display: 'flex', alignItems: 'center', gap: '14px', width: '100%' }}
+                  onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(-3px)'; b.style.boxShadow = `0 8px 24px ${q.color}28`; }}
+                  onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(0)'; b.style.boxShadow = '0 1px 8px rgba(0,0,0,.05)'; }}
+                >
+                  <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: q.bg, border: `1px solid ${q.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.35rem', flexShrink: 0 }}>
+                    {q.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: '.86rem', color: '#0f172a' }}>{q.label}</div>
+                    <div style={{ fontSize: '.74rem', fontWeight: 700, color: q.color, marginTop: '2px' }}>Ouvrir →</div>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </main>
-      )}
 
-      {/* ── FOOTER ── */}
-      <footer style={{ textAlign: 'center', fontSize: '.72rem', color: '#94a3b8', padding: '14px', borderTop: '1px solid #e2e8f0', background: '#fff', marginTop: 'auto' }}>
-        © 2025 Tamanar Assistance — Powered by Lahderaziz
-      </footer>
+        <footer style={{ textAlign: 'center', fontSize: '.7rem', color: '#94a3b8', padding: '12px', borderTop: '1px solid #e8ecf4', background: '#fff' }}>
+          © 2025 Tamanar Assistance — Powered by Lahderaziz
+        </footer>
+      </div>
+
+      {/* Responsive CSS */}
+      <style>{`
+        @media (min-width: 768px) {
+          .sidebar-desktop { transform: translateX(0) !important; }
+          .sidebar-toggle  { display: none !important; }
+        }
+        @media (max-width: 767px) {
+          .sidebar-desktop { transform: translateX(-100%); }
+          .sidebar-desktop.open { transform: translateX(0); }
+          .sidebar-toggle  { display: flex !important; }
+          .main-offset     { margin-left: 0 !important; }
+        }
+      `}</style>
     </div>
   );
 };
 
 export default Home;
-
-/* ── CARD ── */
-const ActionCard = ({ icon, title, desc, gradient, shadow, onClick }: {
-  icon: string; title: string; desc: string; gradient: string; shadow: string; onClick: () => void;
-}) => (
-  <button onClick={onClick}
-    style={{ background: '#fff', border: '1px solid #e8ecf4', borderRadius: '18px', padding: '24px 20px', cursor: 'pointer', textAlign: 'left', transition: 'all .2s', boxShadow: '0 2px 12px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}
-    onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(-5px)'; b.style.boxShadow = `0 14px 36px ${shadow}`; b.style.borderColor = 'transparent'; }}
-    onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(0)'; b.style.boxShadow = '0 2px 12px rgba(0,0,0,.06)'; b.style.borderColor = '#e8ecf4'; }}
-  >
-    <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: `0 6px 16px ${shadow}`, flexShrink: 0 }}>
-      {icon}
-    </div>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontWeight: 800, fontSize: '.92rem', color: '#0f172a', marginBottom: '4px' }}>{title}</div>
-      <div style={{ fontSize: '.76rem', color: '#94a3b8', lineHeight: 1.5 }}>{desc}</div>
-    </div>
-    <div style={{ fontSize: '.74rem', fontWeight: 800, background: gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px' }}>
-      Accéder →
-    </div>
-  </button>
-);
