@@ -3,11 +3,46 @@ import { useNavigate } from 'react-router-dom';
 import logo from './assets/logo.png';
 
 const CARDS = [
-  { icon: '🚛', title: 'Registre Intervention', desc: 'Créer et gérer les interventions',        route: '/operation?type=intervention',    accent: '#6366f1', bg: '#eef2ff', border: '#c7d2fe' },
-  { icon: '⛽', title: 'Suivi Carburant',       desc: 'Suivi de la consommation carburant',     route: '/operation?type=suivi_carburant', accent: '#0ea5e9', bg: '#e0f2fe', border: '#bae6fd' },
-  { icon: '📚', title: 'Historique',            desc: 'Consulter les opérations passées',        route: '/userhistory',                    accent: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
-  { icon: '📊', title: 'Statistiques',          desc: 'Rapports et analyses',                   route: '/statistics',                     accent: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
-  { icon: '🧾', title: 'Registre Factures',     desc: 'Consulter et exporter les factures',     route: '/facture-records',                accent: '#ec4899', bg: '#fdf2f8', border: '#fbcfe8' },
+  {
+    icon: '🚛',
+    title: 'Registre Intervention',
+    desc: 'Créer et gérer les interventions',
+    route: '/operation?type=intervention',
+    gradient: 'linear-gradient(135deg,#6366f1,#818cf8)',
+    shadow: 'rgba(99,102,241,.4)',
+  },
+  {
+    icon: '⛽',
+    title: 'Suivi Carburant',
+    desc: 'Suivi de la consommation carburant',
+    route: '/operation?type=suivi_carburant',
+    gradient: 'linear-gradient(135deg,#0ea5e9,#38bdf8)',
+    shadow: 'rgba(14,165,233,.4)',
+  },
+  {
+    icon: '📚',
+    title: 'Historique',
+    desc: 'Consulter les opérations passées',
+    route: '/userhistory',
+    gradient: 'linear-gradient(135deg,#10b981,#34d399)',
+    shadow: 'rgba(16,185,129,.4)',
+  },
+  {
+    icon: '📊',
+    title: 'Statistiques',
+    desc: 'Rapports et analyses',
+    route: '/statistics',
+    gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)',
+    shadow: 'rgba(245,158,11,.4)',
+  },
+  {
+    icon: '🧾',
+    title: 'Registre Factures',
+    desc: 'Consulter et exporter les factures',
+    route: '/facture-records',
+    gradient: 'linear-gradient(135deg,#ec4899,#f472b6)',
+    shadow: 'rgba(236,72,153,.4)',
+  },
 ];
 
 const Home = () => {
@@ -25,67 +60,84 @@ const Home = () => {
   const handleLogout = useCallback(() => navigate('/logout'), [navigate]);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#f8faff 0%,#f1f5f9 100%)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#f0f4ff', display: 'flex', flexDirection: 'column', fontFamily: 'Segoe UI,system-ui,sans-serif' }}>
 
-      {/* HEADER */}
+      {/* ── HEADER ── */}
       <header style={{
-        background: '#fff',
-        borderBottom: '1px solid #e2e8f0',
-        padding: '0 clamp(16px,4vw,32px)',
-        height: '64px',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#1e3a5f 100%)',
+        padding: '0 clamp(16px,4vw,36px)',
+        height: '70px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        boxShadow: '0 1px 10px rgba(0,0,0,.06)',
+        boxShadow: '0 4px 24px rgba(0,0,0,.25)',
         position: 'sticky', top: 0, zIndex: 50, gap: '12px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img src={logo} alt="Logo" style={{ height: '42px', objectFit: 'contain' }} />
+        {/* Logo + brand */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '5px 8px', boxShadow: '0 2px 10px rgba(0,0,0,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={logo} alt="Logo" style={{ height: '40px', objectFit: 'contain' }} />
+          </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '.95rem', color: '#0f172a', letterSpacing: '.3px' }}>TAMANAR ASSISTANCE</div>
-            <div style={{ fontSize: '.62rem', color: '#94a3b8', letterSpacing: '1.5px', fontWeight: 600, textTransform: 'uppercase' }}>Tableau de bord</div>
+            <div style={{ fontWeight: 900, fontSize: '1rem', color: '#fff', letterSpacing: '.8px' }}>TAMANAR ASSISTANCE</div>
+            <div style={{ fontSize: '.6rem', color: '#94a3b8', letterSpacing: '2px', fontWeight: 600, textTransform: 'uppercase' }}>Tableau de bord</div>
           </div>
         </div>
+
+        {/* User actions */}
         {isAuthenticated && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ background: '#f8fafc', color: '#475569', padding: '5px 14px', borderRadius: '999px', fontSize: '.78rem', fontWeight: 700, border: '1px solid #e2e8f0' }}>
-              👤 {username}
-            </span>
-            <button onClick={handleLogout} style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '6px 16px', borderRadius: '8px', fontSize: '.78rem', fontWeight: 700, cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '999px', padding: '5px 14px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.8rem', fontWeight: 800, color: '#fff' }}>
+                {username?.charAt(0).toUpperCase()}
+              </div>
+              <span style={{ fontSize: '.82rem', fontWeight: 700, color: '#e2e8f0' }}>{username}</span>
+            </div>
+            <button onClick={handleLogout} style={{ background: 'rgba(239,68,68,.2)', color: '#fca5a5', border: '1px solid rgba(239,68,68,.3)', padding: '7px 16px', borderRadius: '8px', fontSize: '.8rem', fontWeight: 700, cursor: 'pointer', transition: 'all .2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,.35)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,.2)'; }}
+            >
               Déconnexion
             </button>
           </div>
         )}
       </header>
 
-      {/* MAIN */}
-      <main style={{ flex: 1, padding: 'clamp(24px,4vw,44px) clamp(16px,4vw,36px)', maxWidth: '1100px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-        {isAuthenticated && (
-          <>
-            {/* Banner */}
-            <div style={{
-              background: 'linear-gradient(135deg,#1e293b 0%,#334155 50%,#4f6272 100%)',
-              borderRadius: '20px', padding: 'clamp(22px,4vw,36px) clamp(22px,4vw,40px)',
-              marginBottom: '30px', color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              boxShadow: '0 10px 36px rgba(15,23,42,.16)', gap: '16px',
-            }}>
-              <div>
-                <p style={{ margin: '0 0 4px', fontSize: '.82rem', opacity: .6, textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 600 }}>Bienvenue</p>
-                <h1 style={{ margin: '0 0 6px', fontSize: 'clamp(1.3rem,3vw,1.9rem)', fontWeight: 800 }}>{username} 👋</h1>
-                <p style={{ margin: 0, opacity: .65, fontSize: '.88rem' }}>Choisissez une opération pour commencer</p>
-              </div>
-              <img src={logo} alt="" style={{ height: '56px', opacity: .18, objectFit: 'contain', flexShrink: 0 }} />
-            </div>
+      {/* ── HERO BANNER ── */}
+      {isAuthenticated && (
+        <div style={{
+          background: 'linear-gradient(135deg,#1e293b 0%,#1e3a5f 50%,#312e81 100%)',
+          padding: 'clamp(28px,5vw,48px) clamp(16px,4vw,36px)',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* decorative circles */}
+          <div style={{ position: 'absolute', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(99,102,241,.08)', top: '-80px', right: '15%', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(14,165,233,.06)', bottom: '-60px', right: '5%', pointerEvents: 'none' }} />
 
-            {/* Cards grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: '16px' }}>
-              {CARDS.map(card => <ActionCard key={card.title} {...card} onClick={() => navigate(card.route)} />)}
+          <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative' }}>
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: '.75rem', color: '#94a3b8', letterSpacing: '2px', fontWeight: 700, textTransform: 'uppercase' }}>Bienvenue</p>
+              <h1 style={{ margin: '0 0 8px', fontSize: 'clamp(1.5rem,4vw,2.4rem)', fontWeight: 900, color: '#fff', letterSpacing: '-.3px' }}>
+                {username} 👋
+              </h1>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '.92rem' }}>Choisissez une opération pour commencer</p>
             </div>
-          </>
-        )}
-      </main>
+            {/* Big logo in hero */}
+            <img src={logo} alt="" style={{ height: 'clamp(60px,10vw,100px)', objectFit: 'contain', opacity: .35, flexShrink: 0 }} />
+          </div>
+        </div>
+      )}
 
-      {/* FOOTER */}
-      <footer style={{ textAlign: 'center', fontSize: '.72rem', color: '#94a3b8', padding: '14px', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
+      {/* ── CARDS ── */}
+      {isAuthenticated && (
+        <main style={{ flex: 1, padding: 'clamp(20px,4vw,36px) clamp(16px,4vw,36px)', maxWidth: '1180px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+          <p style={{ fontSize: '.75rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '16px' }}>Actions rapides</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(210px,1fr))', gap: '18px' }}>
+            {CARDS.map(c => <ActionCard key={c.title} {...c} onClick={() => navigate(c.route)} />)}
+          </div>
+        </main>
+      )}
+
+      {/* ── FOOTER ── */}
+      <footer style={{ textAlign: 'center', fontSize: '.72rem', color: '#94a3b8', padding: '14px', borderTop: '1px solid #e2e8f0', background: '#fff', marginTop: 'auto' }}>
         © 2025 Tamanar Assistance — Powered by Lahderaziz
       </footer>
     </div>
@@ -94,21 +146,24 @@ const Home = () => {
 
 export default Home;
 
-const ActionCard = ({ icon, title, desc, accent, bg, border, onClick }: {
-  icon: string; title: string; desc: string; accent: string; bg: string; border: string; onClick: () => void;
+/* ── CARD ── */
+const ActionCard = ({ icon, title, desc, gradient, shadow, onClick }: {
+  icon: string; title: string; desc: string; gradient: string; shadow: string; onClick: () => void;
 }) => (
   <button onClick={onClick}
-    style={{ background: '#fff', border: `1.5px solid ${border}`, borderRadius: '16px', padding: '22px 18px', cursor: 'pointer', textAlign: 'left', transition: 'all .18s', boxShadow: '0 1px 6px rgba(0,0,0,.05)', display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}
-    onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(-4px)'; b.style.boxShadow = `0 10px 28px ${accent}28`; b.style.borderColor = accent; }}
-    onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(0)'; b.style.boxShadow = '0 1px 6px rgba(0,0,0,.05)'; b.style.borderColor = border; }}
+    style={{ background: '#fff', border: '1px solid #e8ecf4', borderRadius: '18px', padding: '24px 20px', cursor: 'pointer', textAlign: 'left', transition: 'all .2s', boxShadow: '0 2px 12px rgba(0,0,0,.06)', display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}
+    onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(-5px)'; b.style.boxShadow = `0 14px 36px ${shadow}`; b.style.borderColor = 'transparent'; }}
+    onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.transform = 'translateY(0)'; b.style.boxShadow = '0 2px 12px rgba(0,0,0,.06)'; b.style.borderColor = '#e8ecf4'; }}
   >
-    <div style={{ width: '48px', height: '48px', borderRadius: '13px', background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0 }}>
+    <div style={{ width: '52px', height: '52px', borderRadius: '14px', background: gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', boxShadow: `0 6px 16px ${shadow}`, flexShrink: 0 }}>
       {icon}
     </div>
     <div style={{ flex: 1 }}>
-      <div style={{ fontWeight: 700, fontSize: '.9rem', color: '#0f172a', marginBottom: '3px' }}>{title}</div>
-      <div style={{ fontSize: '.76rem', color: '#94a3b8' }}>{desc}</div>
+      <div style={{ fontWeight: 800, fontSize: '.92rem', color: '#0f172a', marginBottom: '4px' }}>{title}</div>
+      <div style={{ fontSize: '.76rem', color: '#94a3b8', lineHeight: 1.5 }}>{desc}</div>
     </div>
-    <div style={{ fontSize: '.73rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', gap: '4px' }}>Accéder →</div>
+    <div style={{ fontSize: '.74rem', fontWeight: 800, background: gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '4px' }}>
+      Accéder →
+    </div>
   </button>
 );
