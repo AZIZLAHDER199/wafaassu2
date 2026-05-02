@@ -21,16 +21,20 @@ from django.db.models import Count
 from django.utils import timezone
 from decimal import Decimal
 
-# NEW IMPORTS for xhtml2pdf
-from django.template.loader import get_template
 from io import BytesIO
-try:
-    from xhtml2pdf import pisa
-except ImportError:
-    pisa = None
-from datetime import date, datetime # For date.today() and datetime parsing
-from django.core.files.base import ContentFile # For saving PDF to FileField
-from django.conf import settings # To access static files
+from datetime import date, datetime
+from django.core.files.base import ContentFile
+from django.conf import settings
+import os
+
+# reportlab imports
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, Image
+from reportlab.platypus import KeepTogether
 
 # Helper function to convert number to text (remains, used by template)
 def convert_number_to_text(number):
@@ -536,6 +540,228 @@ def download_facture_pdf(request, pk):
 
 
 
+LOGO_PATH = os.path.join(os.path.dirname(__file__), 'static', 'USERS', 'logo.png')
+
+PRIMARY   = colors.HexColor('#1e3a8a')
+ACCENT    = colors.HexColor('#f97316')
+LIGHT_BG  = colors.HexColor('#eff6ff')
+BORDER    = colors.HexColor('#c7d2fe')
+TEXT_DARK = colors.HexColor('#0f172a')
+TEXT_MUTED= colors.HexColor('#64748b')
+WHITE     = colors.white
+GREEN_BG  = colors.HexColor('#d1fae5')
+GREEN_FG  = colors.HexColor('#065f46')
+
+def build_facture_pdf(ctx: dict) -> bytes:
+    buf = BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=18*mm, rightMargin=18*mm,
+        topMargin=14*mm, bottomMargin=14*mm,
+    )
+    W = A4[0] - 36*mm
+
+    styles = getSampleStyleSheet()
+    def S(name, **kw):
+        base = styles['Normal']
+        return ParagraphStyle(name, parent=base, **kw)
+
+    title_s   = S('title',   fontSize=16, textColor=WHITE,    alignment=TA_CENTER, fontName='Helvetica-Bold', leading=20)
+    sub_s     = S('sub',     fontSize=8,  textColor=ACCENT,   alignment=TA_CENTER, fontName='Helvetica-Bold', letterSpacing=1)
+    h2_s      = S('h2',      fontSize=10, textColor=PRIMARY,  fontName='Helvetica-Bold', leading=14)
+    body_s    = S('body',    fontSize=9,  textColor=TEXT_DARK, leading=13)
+    muted_s   = S('muted',   fontSize=8,  textColor=TEXT_MUTED, leading=11)
+    bold_s    = S('bold',    fontSize=9,  textColor=TEXT_DARK, fontName='Helvetica-Bold', leading=13)
+    right_s   = S('right',   fontSize=9,  textColor=TEXT_DARK, alignment=TA_RIGHT, leading=13)
+    num_s     = S('num',     fontSize=22, textColor=PRIMARY,  fontName='Helvetica-Bold', alignment=TA_RIGHT, leading=26)
+    total_s   = S('total',   fontSize=11, textColor=GREEN_FG, fontName='Helvetica-Bold', alignment=TA_RIGHT, leading=15)
+    words_s   = S('words',   fontSize=9,  textColor=PRIMARY,  fontName='Helvetica-BoldOblique', leading=13)
+    footer_s  = S('footer',  fontSize=7,  textColor=TEXT_MUTED, alignment=TA_CENTER, leading=10)
+
+    story = []
+
+    # ── HEADER BANNER ──────────────────────────────────────────────
+    has_logo = os.path.exists(LOGO_PATH)
+    if has_logo:
+        logo_img = Image(LOGO_PATH, width=44*mm, height=17*mm)
+        logo_cell = logo_img
+    else:
+        logo_cell = Paragraph('<b>TAMANAR</b>', S('lc', fontSize=14, textColor=WHITE, fontName='Helvetica-Bold'))
+
+    header_inner = Table(
+        [[logo_cell,
+          [Paragraph('FACTURE', title_s),
+           Paragraph('TAMANAR ASSISTANCE', sub_s)]]],
+        colWidths=[50*mm, W - 50*mm],
+        hAlign='LEFT',
+    )
+    header_inner.setStyle(TableStyle([
+        ('VALIGN',      (0,0),(-1,-1), 'MIDDLE'),
+        ('ALIGN',       (1,0),(1,0),   'CENTER'),
+        ('LEFTPADDING', (0,0),(0,0),   4),
+    ]))
+
+    header_wrap = Table([[header_inner]], colWidths=[W])
+    header_wrap.setStyle(TableStyle([
+        ('BACKGROUND',   (0,0),(-1,-1), PRIMARY),
+        ('ROUNDEDCORNERS', [8]),
+        ('TOPPADDING',   (0,0),(-1,-1), 8),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 8),
+        ('LEFTPADDING',  (0,0),(-1,-1), 10),
+        ('RIGHTPADDING', (0,0),(-1,-1), 10),
+    ]))
+    story.append(header_wrap)
+    story.append(Spacer(1, 6*mm))
+
+    # ── META ROW  (N° facture | Date) ──────────────────────────────
+    meta = Table([
+        [Paragraph(f'N° <b>{ctx["facture_num"]}</b>', num_s),
+         Paragraph(f'Date : <b>{ctx["date"]}</b>', right_s)],
+    ], colWidths=[W*0.6, W*0.4])
+    meta.setStyle(TableStyle([
+        ('VALIGN',       (0,0),(-1,-1), 'MIDDLE'),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 2),
+    ]))
+    story.append(meta)
+    story.append(HRFlowable(width=W, thickness=2, color=ACCENT, spaceAfter=5))
+
+    # ── FROM / TO ───────────────────────────────────────────────────
+    from_lines = [
+        Paragraph('DE :', h2_s),
+        Paragraph('<b>TAMANAR ASSISTANCE</b>', bold_s),
+        Paragraph('Point d\'attache : ' + ctx.get('point_attach',''), body_s),
+    ]
+    to_lines = [
+        Paragraph('DESTINATAIRE :', h2_s),
+        Paragraph(f'<b>{ctx.get("destinataire","")}</b>', bold_s),
+        Paragraph(f'ICE : {ctx.get("ice","")}', body_s),
+        Paragraph(ctx.get("adresse",""), body_s),
+    ]
+    addr_table = Table([[from_lines, to_lines]], colWidths=[W*0.45, W*0.55])
+    addr_table.setStyle(TableStyle([
+        ('VALIGN',       (0,0),(-1,-1), 'TOP'),
+        ('BACKGROUND',   (0,0),(0,0),   LIGHT_BG),
+        ('BACKGROUND',   (1,0),(1,0),   colors.HexColor('#fff7ed')),
+        ('BOX',          (0,0),(0,0),   0.5, BORDER),
+        ('BOX',          (1,0),(1,0),   0.5, ACCENT),
+        ('ROUNDEDCORNERS',[6]),
+        ('TOPPADDING',   (0,0),(-1,-1), 7),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 7),
+        ('LEFTPADDING',  (0,0),(-1,-1), 8),
+        ('RIGHTPADDING', (0,0),(-1,-1), 8),
+    ]))
+    story.append(addr_table)
+    story.append(Spacer(1, 5*mm))
+
+    # ── MISSION INFO TABLE ─────────────────────────────────────────
+    def row(label, value):
+        return [Paragraph(label, muted_s), Paragraph(str(value) if value else '—', body_s)]
+
+    info_data = [
+        row('Référence dossier',       ctx.get('reference','')),
+        row('Lieu d\'intervention',    ctx.get('lieu_intervention','')),
+        row('Destination',             ctx.get('destination','')),
+        row('Périmètre',               ctx.get('perimetre','')),
+    ]
+    info_tbl = Table(info_data, colWidths=[45*mm, W - 45*mm])
+    info_tbl.setStyle(TableStyle([
+        ('VALIGN',       (0,0),(-1,-1), 'TOP'),
+        ('TOPPADDING',   (0,0),(-1,-1), 4),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 4),
+        ('LEFTPADDING',  (0,0),(-1,-1), 6),
+        ('RIGHTPADDING', (0,0),(-1,-1), 6),
+        ('ROWBACKGROUNDS',(0,0),(-1,-1), [WHITE, LIGHT_BG]),
+        ('LINEBELOW',    (0,0),(-1,-2), 0.3, BORDER),
+        ('BOX',          (0,0),(-1,-1), 0.5, BORDER),
+    ]))
+    story.append(info_tbl)
+    story.append(Spacer(1, 4*mm))
+
+    # ── DESCRIPTION ────────────────────────────────────────────────
+    story.append(Paragraph('Objet / Description :', h2_s))
+    story.append(Spacer(1, 2))
+    desc_tbl = Table([[Paragraph(ctx.get('description',''), body_s)]], colWidths=[W])
+    desc_tbl.setStyle(TableStyle([
+        ('BACKGROUND',   (0,0),(-1,-1), LIGHT_BG),
+        ('BOX',          (0,0),(-1,-1), 0.5, BORDER),
+        ('LEFTBORDER',   (0,0),(0,-1),  3,   PRIMARY),
+        ('TOPPADDING',   (0,0),(-1,-1), 7),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 7),
+        ('LEFTPADDING',  (0,0),(-1,-1), 10),
+        ('RIGHTPADDING', (0,0),(-1,-1), 8),
+    ]))
+    story.append(desc_tbl)
+    story.append(Spacer(1, 5*mm))
+
+    # ── AMOUNTS TABLE ──────────────────────────────────────────────
+    def fmt(v): return f"{float(v):,.2f} MAD".replace(',', ' ')
+
+    amounts_data = [
+        [Paragraph('Désignation', S('ah', fontSize=9, textColor=WHITE, fontName='Helvetica-Bold')),
+         Paragraph('Montant', S('ah2', fontSize=9, textColor=WHITE, fontName='Helvetica-Bold', alignment=TA_RIGHT))],
+        [Paragraph('Montant HT', body_s),        Paragraph(fmt(ctx['montant_ht']),  right_s)],
+        [Paragraph('TVA (20%)',   body_s),        Paragraph(fmt(ctx['tva_amount']),  right_s)],
+        [Paragraph('<b>Montant TTC</b>', bold_s), Paragraph(f'<b>{fmt(ctx["montant_ttc"])}</b>', total_s)],
+    ]
+    amt_tbl = Table(amounts_data, colWidths=[W*0.65, W*0.35])
+    amt_tbl.setStyle(TableStyle([
+        ('BACKGROUND',   (0,0),(-1,0),  PRIMARY),
+        ('BACKGROUND',   (0,3),(-1,3),  GREEN_BG),
+        ('ROWBACKGROUNDS',(0,1),(-1,2), [WHITE, LIGHT_BG]),
+        ('VALIGN',       (0,0),(-1,-1), 'MIDDLE'),
+        ('TOPPADDING',   (0,0),(-1,-1), 6),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 6),
+        ('LEFTPADDING',  (0,0),(-1,-1), 10),
+        ('RIGHTPADDING', (0,0),(-1,-1), 10),
+        ('BOX',          (0,0),(-1,-1), 0.5, BORDER),
+        ('LINEBELOW',    (0,0),(-1,-2), 0.3, BORDER),
+        ('LINEBELOW',    (0,2),(-1,2),  1.5, ACCENT),
+    ]))
+    story.append(amt_tbl)
+    story.append(Spacer(1, 3*mm))
+
+    # ── AMOUNT IN WORDS ────────────────────────────────────────────
+    words_tbl = Table(
+        [[Paragraph(f'Arrêtée la présente facture à la somme de :<br/>'
+                    f'<b>{ctx.get("montant_ttc_text","")}</b> Dirhams TTC', words_s)]],
+        colWidths=[W]
+    )
+    words_tbl.setStyle(TableStyle([
+        ('BACKGROUND',   (0,0),(-1,-1), LIGHT_BG),
+        ('BOX',          (0,0),(-1,-1), 1, PRIMARY),
+        ('TOPPADDING',   (0,0),(-1,-1), 7),
+        ('BOTTOMPADDING',(0,0),(-1,-1), 7),
+        ('LEFTPADDING',  (0,0),(-1,-1), 10),
+    ]))
+    story.append(words_tbl)
+    story.append(Spacer(1, 8*mm))
+
+    # ── SIGNATURE ─────────────────────────────────────────────────
+    sig_tbl = Table([
+        [Paragraph('Cachet et Signature', S('sig', fontSize=8, textColor=TEXT_MUTED, alignment=TA_CENTER))],
+        [Spacer(1, 18*mm)],
+    ], colWidths=[W*0.4], hAlign='RIGHT')
+    sig_tbl.setStyle(TableStyle([
+        ('BOX',          (0,0),(-1,-1), 0.5, BORDER),
+        ('ALIGN',        (0,0),(-1,-1), 'CENTER'),
+        ('TOPPADDING',   (0,0),(-1,-1), 5),
+    ]))
+    story.append(sig_tbl)
+
+    # ── FOOTER ─────────────────────────────────────────────────────
+    story.append(Spacer(1, 4*mm))
+    story.append(HRFlowable(width=W, thickness=1, color=BORDER))
+    story.append(Spacer(1, 2))
+    story.append(Paragraph(
+        'TAMANAR ASSISTANCE — Remorquage &amp; Assistance Routière Expert Auto | '
+        f'Généré le {ctx.get("current_date","")}',
+        footer_s
+    ))
+
+    doc.build(story)
+    return buf.getvalue()
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generate_facture_pdf(request, pk):
@@ -618,24 +844,14 @@ def generate_facture_pdf(request, pk):
         }
         print(f"Context for template: {context_for_template}")  # Debug context
 
-        template_path = 'USERS/facture_template.html'
-        template = get_template(template_path)
-        html = template.render(context_for_template)
-        print(f"Rendered HTML: {html[:500]}...")  # Log first 500 chars of HTML
-
-        result_file = BytesIO()
-        pdf_status = pisa.CreatePDF(
-            BytesIO(html.encode("UTF-8")),
-            dest=result_file,
-        )
-
-        if pdf_status.err:
-            print(f"pisa error: {pdf_status.err_msg}")
-            return Response({'error': f"Error generating PDF: {pdf_status.err_msg}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        pdf_data = result_file.getvalue()
-        result_file.close()
-        facture_instance.pdf_file.save(f'facture_{facture_instance.facture_num.replace("/", "_")}.pdf', ContentFile(pdf_data))
+        pdf_data = build_facture_pdf(context_for_template)
+        try:
+            facture_instance.pdf_file.save(
+                f'facture_{facture_instance.facture_num.replace("/", "_")}.pdf',
+                ContentFile(pdf_data)
+            )
+        except Exception:
+            pass
 
         AdminActionLog.objects.create(
             admin_user=request.user,
