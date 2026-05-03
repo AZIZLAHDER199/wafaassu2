@@ -230,12 +230,12 @@ const FactureRecords: React.FC = () => {
                         <span style={{ background: '#d1fae5', color: '#065f46', padding: '4px 10px', borderRadius: '8px', fontWeight: 700, fontSize: '.84rem', whiteSpace: 'nowrap' }}>{Number(f.montant_ttc || 0).toLocaleString('fr-FR')} MAD</span>
                       </td>
                       <td style={{ padding: '10px 14px' }}>
-                        {(f as any).user?.username
+                        {(f as any).user
                           ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f3e8ff', color: '#6d28d9', borderRadius: '999px', padding: '3px 10px', fontWeight: 700, fontSize: '.75rem', whiteSpace: 'nowrap' }}>
                               <span style={{ width: '18px', height: '18px', background: '#7c3aed', color: '#fff', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.65rem', fontWeight: 800 }}>
-                                {(f as any).user.username[0].toUpperCase()}
+                                {String((f as any).user)[0].toUpperCase()}
                               </span>
-                              {(f as any).user.username}
+                              {String((f as any).user)}
                             </span>
                           : <span style={{ color: '#94a3b8', fontSize: '.78rem' }}>—</span>}
                       </td>

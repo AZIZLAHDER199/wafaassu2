@@ -143,12 +143,12 @@ const SuiviCarburantRecords: React.FC = () => {
                     >
                       <td style={{ padding:'11px 14px', color:'#334155', whiteSpace:'nowrap' }}>{d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '—'}</td>
                       <td style={{ padding:'11px 14px' }}>
-                        {(d as any).user?.username
+                        {(d as any).user
                           ? <span style={{ display:'inline-flex', alignItems:'center', gap:'6px', background:'#f3e8ff', color:'#6d28d9', borderRadius:'999px', padding:'3px 10px', fontWeight:700, fontSize:'.75rem' }}>
                               <span style={{ width:'18px', height:'18px', background:'#7c3aed', color:'#fff', borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:'.65rem', fontWeight:800 }}>
-                                {(d as any).user.username[0].toUpperCase()}
+                                {String((d as any).user)[0].toUpperCase()}
                               </span>
-                              {(d as any).user.username}
+                              {String((d as any).user)}
                             </span>
                           : <span style={{ color:'#94a3b8', fontSize:'.78rem' }}>—</span>}
                       </td>

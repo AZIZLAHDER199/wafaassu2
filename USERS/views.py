@@ -179,8 +179,6 @@ def get_interventions(request):
         interventions = interventions.filter(status=status_filter)
     if date_from:
         interventions = interventions.filter(date_intervention__gte=date_from)
-    if not request.user.is_staff:
-        interventions = interventions.filter(user=request.user)
     serializer = InterventionSerializer(interventions, many=True)
     return Response(serializer.data)
 
@@ -255,8 +253,6 @@ def get_suivi_carburant(request):
         suivi_carburants = suivi_carburants.filter(date__gte=date_from)
     if station_filter:
         suivi_carburants = suivi_carburants.filter(station__icontains=station_filter)
-    if not request.user.is_staff:
-        suivi_carburants = suivi_carburants.filter(user=request.user)
     serializer = SuiviCarburantSerializer(suivi_carburants, many=True)
     return Response(serializer.data)
 
@@ -337,8 +333,6 @@ def get_factures(request):
         factures = factures.filter(billing_company_obj__nom=societe)
     if date_from:
         factures = factures.filter(date__gte=date_from)
-    if not request.user.is_staff:
-        factures = factures.filter(user=request.user)
     serializer = FactureSerializer(factures, many=True)
     return Response(serializer.data)
 
@@ -884,9 +878,6 @@ def get_suivi_carburant_stats_by_month(request):
     try:
         suivi_carburants = SuiviCarburant.objects.all()
         # إذا كان المستخدم ليس من الـ Staff، غادي نوريو ليه غير البيانات ديالو
-        if not request.user.is_staff:
-            suivi_carburants = suivi_carburants.filter(user=request.user)
-
         # تجميع البيانات حسب الشهر و حساب المجموع ديال الـ prix
         monthly_stats = suivi_carburants.annotate(month=TruncMonth('date')).values('month').annotate(total_prix=Sum('prix')).order_by('month')
         
@@ -956,10 +947,6 @@ def get_factures(request):
     if date_from:
         factures = factures.filter(date__gte=date_from)
     
-    if not request.user.is_staff:
-        factures = factures.filter(user=request.user)
-    
-    # NEW: نستعملو serializer المصحح
     serializer = FactureSerializer(factures, many=True)
     return Response(serializer.data)
 
@@ -1565,8 +1552,6 @@ class ExportToExcelView(APIView):
         # =========================
         if model_type == "intervention":
             qs = Intervention.objects.all()
-            if not request.user.is_staff:
-                qs = qs.filter(user=request.user)
 
             df = pd.DataFrame(list(qs.values(
                 "ref_dossier",
@@ -1598,8 +1583,6 @@ class ExportToExcelView(APIView):
         # =========================
         elif model_type == "suivi_carburant":
             qs = SuiviCarburant.objects.all()
-            if not request.user.is_staff:
-                qs = qs.filter(user=request.user)
 
             df = pd.DataFrame(list(qs.values(
                 "date",
@@ -1627,8 +1610,6 @@ class ExportToExcelView(APIView):
         # =========================
         elif model_type == "facture":
             qs = Facture.objects.all()
-            if not request.user.is_staff:
-                qs = qs.filter(user=request.user)
 
             df = pd.DataFrame(list(qs.values(
                 "facture_num",

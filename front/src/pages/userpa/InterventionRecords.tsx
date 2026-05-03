@@ -5,7 +5,7 @@ import { FiArrowLeft, FiRefreshCw, FiTrash2, FiTruck, FiFilter } from 'react-ico
 interface InterventionData {
   id: number;
   date_intervention: string;
-  user?: { username: string } | null;
+  user?: string | null;
   evenement: string;
   status: string;
   assure?: string;
@@ -179,7 +179,16 @@ const InterventionRecords: React.FC = () => {
                       onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = i%2===0?'#fff':'#eff6ff'}
                     >
                       <td style={{ padding:'10px 12px', whiteSpace:'nowrap', color:'#334155' }}>{new Date(inv.date_intervention).toLocaleDateString('fr-FR')}</td>
-                      <td style={{ padding:'10px 12px', color:'#475569' }}>{inv.user?.username || '—'}</td>
+                      <td style={{ padding:'10px 12px' }}>
+                        {inv.user
+                          ? <span style={{ display:'inline-flex', alignItems:'center', gap:'6px', background:'#f3e8ff', color:'#6d28d9', borderRadius:'999px', padding:'3px 10px', fontWeight:700, fontSize:'.75rem' }}>
+                              <span style={{ width:'18px', height:'18px', background:'#7c3aed', color:'#fff', borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:'.65rem', fontWeight:800 }}>
+                                {inv.user[0].toUpperCase()}
+                              </span>
+                              {inv.user}
+                            </span>
+                          : <span style={{ color:'#94a3b8', fontSize:'.78rem' }}>—</span>}
+                      </td>
                       <td style={{ padding:'10px 12px', fontWeight:600, color:'#0f172a' }}>{inv.evenement}</td>
                       <td style={{ padding:'10px 12px' }}>
                         <span style={{

@@ -14,18 +14,18 @@ interface FactureData {
   id: number; facture_num: string; date: string;
   billing_company?: string; billing_company_name_display?: string;
   montant_ttc: number;
-  user?: { username: string } | null;
+  user?: string | null;
 }
 interface InterventionData {
   id: number; ref_dossier: string; assure: string;
   date_intervention: string; evenement: string;
   status: string; cout_prestation_ttc: number;
-  user?: { username: string } | null;
+  user?: string | null;
 }
 interface SuiviCarData {
   id: number; vehicule: string; date: string;
   prix: number; service: string; pompiste?: string; smitoStation: string;
-  user?: { username: string } | null;
+  user?: string | null;
 }
 interface MonthlyTotal { month: string; total_prix: number; }
 
