@@ -129,7 +129,7 @@ const SuiviCarburantRecords: React.FC = () => {
               <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'.855rem' }}>
                 <thead>
                   <tr style={{ background:'linear-gradient(90deg,#ea580c,#f97316)' }}>
-                    {['Date','Véhicule','Prix','Service','Pompiste','Station','Actions'].map(h => (
+                    {['Date','Ajouté par','Véhicule','Prix','Service','Pompiste','Station','Actions'].map(h => (
                       <th key={h} style={{ padding:'13px 14px', color:'#fff', fontWeight:700, textAlign:'left', whiteSpace:'nowrap', fontSize:'.8rem' }}>{h}</th>
                     ))}
                   </tr>
@@ -142,6 +142,16 @@ const SuiviCarburantRecords: React.FC = () => {
                       onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = i%2===0?'#fff':'#fff7ed'}
                     >
                       <td style={{ padding:'11px 14px', color:'#334155', whiteSpace:'nowrap' }}>{d.date ? new Date(d.date).toLocaleDateString('fr-FR') : '—'}</td>
+                      <td style={{ padding:'11px 14px' }}>
+                        {(d as any).user?.username
+                          ? <span style={{ display:'inline-flex', alignItems:'center', gap:'6px', background:'#f3e8ff', color:'#6d28d9', borderRadius:'999px', padding:'3px 10px', fontWeight:700, fontSize:'.75rem' }}>
+                              <span style={{ width:'18px', height:'18px', background:'#7c3aed', color:'#fff', borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', fontSize:'.65rem', fontWeight:800 }}>
+                                {(d as any).user.username[0].toUpperCase()}
+                              </span>
+                              {(d as any).user.username}
+                            </span>
+                          : <span style={{ color:'#94a3b8', fontSize:'.78rem' }}>—</span>}
+                      </td>
                       <td style={{ padding:'11px 14px', fontWeight:600, color:'#0f172a' }}>{d.vehicule || '—'}</td>
                       <td style={{ padding:'11px 14px' }}>
                         <span style={{ background:'#d1fae5', color:'#065f46', padding:'3px 10px', borderRadius:'8px', fontWeight:700, fontSize:'.82rem' }}>

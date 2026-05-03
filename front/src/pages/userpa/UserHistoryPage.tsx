@@ -14,15 +14,18 @@ interface FactureData {
   id: number; facture_num: string; date: string;
   billing_company?: string; billing_company_name_display?: string;
   montant_ttc: number;
+  user?: { username: string } | null;
 }
 interface InterventionData {
   id: number; ref_dossier: string; assure: string;
   date_intervention: string; evenement: string;
   status: string; cout_prestation_ttc: number;
+  user?: { username: string } | null;
 }
 interface SuiviCarData {
   id: number; vehicule: string; date: string;
   prix: number; service: string; pompiste?: string; smitoStation: string;
+  user?: { username: string } | null;
 }
 interface MonthlyTotal { month: string; total_prix: number; }
 
@@ -242,17 +245,18 @@ const UserHistoryPage: React.FC = () => {
 
   const tableConfig = {
     factures: {
-      cols: ['N° Facture', 'Date', 'Société', 'Montant TTC'],
+      cols: ['N° Facture', 'Date', 'Société', 'Montant TTC', 'Ajouté par'],
       rows: filteredData.factures.map(f => ({
         id: f.id,
         'N° Facture': f.facture_num || 'N/A',
         Date: f.date ? new Date(f.date).toLocaleDateString('fr-FR') : 'N/A',
         Société: f.billing_company_name_display || f.billing_company || 'N/A',
         'Montant TTC': fmt(f.montant_ttc),
+        'Ajouté par': f.user?.username || '—',
       })),
     },
     interventions: {
-      cols: ['Ref Dossier', 'Assuré', 'Date', 'Événement', 'Statut', 'Coût TTC'],
+      cols: ['Ref Dossier', 'Assuré', 'Date', 'Événement', 'Statut', 'Coût TTC', 'Ajouté par'],
       rows: filteredData.interventions.map(i => ({
         id: i.id,
         'Ref Dossier': i.ref_dossier || 'N/A',
@@ -261,10 +265,11 @@ const UserHistoryPage: React.FC = () => {
         Événement: i.evenement || 'N/A',
         Statut: i.status || 'N/A',
         'Coût TTC': fmt(i.cout_prestation_ttc || 0),
+        'Ajouté par': i.user?.username || '—',
       })),
     },
     suiviCarburant: {
-      cols: ['Véhicule', 'Date', 'Prix', 'Service', 'Pompiste', 'Station'],
+      cols: ['Véhicule', 'Date', 'Prix', 'Service', 'Pompiste', 'Station', 'Ajouté par'],
       rows: filteredData.suiviCarburant.map(s => ({
         id: s.id,
         Véhicule: s.vehicule,
@@ -273,6 +278,7 @@ const UserHistoryPage: React.FC = () => {
         Service: s.service,
         Pompiste: s.pompiste || 'N/A',
         Station: s.smitoStation || 'AUCUNE',
+        'Ajouté par': s.user?.username || '—',
       })),
     },
   };

@@ -202,7 +202,7 @@ const FactureRecords: React.FC = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.845rem', minWidth: '900px' }}>
                 <thead>
                   <tr style={{ background: 'linear-gradient(135deg,#2d1060,#1e3a5f)' }}>
-                    {['N° Facture','Date','Société','Référence','Lieu','Destination','Montant HT','TVA','Montant TTC','Actions'].map(h => (
+                    {['N° Facture','Date','Société','Référence','Lieu','Destination','Montant HT','TVA','Montant TTC','Ajouté par','Actions'].map(h => (
                       <th key={h} style={{ padding: '12px 14px', color: '#fff', fontWeight: 700, textAlign: 'left', whiteSpace: 'nowrap', fontSize: '.75rem', letterSpacing: '.3px' }}>{h}</th>
                     ))}
                   </tr>
@@ -228,6 +228,16 @@ const FactureRecords: React.FC = () => {
                       </td>
                       <td style={{ padding: '10px 14px' }}>
                         <span style={{ background: '#d1fae5', color: '#065f46', padding: '4px 10px', borderRadius: '8px', fontWeight: 700, fontSize: '.84rem', whiteSpace: 'nowrap' }}>{Number(f.montant_ttc || 0).toLocaleString('fr-FR')} MAD</span>
+                      </td>
+                      <td style={{ padding: '10px 14px' }}>
+                        {(f as any).user?.username
+                          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#f3e8ff', color: '#6d28d9', borderRadius: '999px', padding: '3px 10px', fontWeight: 700, fontSize: '.75rem', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '18px', height: '18px', background: '#7c3aed', color: '#fff', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.65rem', fontWeight: 800 }}>
+                                {(f as any).user.username[0].toUpperCase()}
+                              </span>
+                              {(f as any).user.username}
+                            </span>
+                          : <span style={{ color: '#94a3b8', fontSize: '.78rem' }}>—</span>}
                       </td>
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ display: 'flex', gap: '5px', flexWrap: 'nowrap' }}>
