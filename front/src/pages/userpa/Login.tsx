@@ -12,7 +12,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError]       = useState<string>('');
   const [loading, setLoading]   = useState(false);
-  const [errorKey, setErrorKey] = useState(0);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,9 +26,11 @@ export default function LoginPage() {
       localStorage.setItem('username', loggedInUsername);
       navigate('/home');
     } catch (err: any) {
-      const msg = err.response?.data?.error || 'Identifiants incorrects.';
-      setErrorKey(k => k + 1);
-      setError(msg);
+      if (err.response?.data) {
+        setError(err.response.data.error || 'Identifiants incorrects.');
+      } else {
+        setError('Erreur réseau. Vérifiez votre connexion.');
+      }
     } finally {
       setLoading(false);
     }
@@ -38,7 +39,6 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-
         <div className="login-logo-wrap">
           <img src={logo} alt="Tamanar Assistance" className="login-logo" />
         </div>
@@ -49,7 +49,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} noValidate>
           {error && (
-            <div key={errorKey} className="login-error">
+            <div className="login-error">
               <FiAlertCircle size={15} />
               <span>{error}</span>
             </div>
@@ -67,7 +67,6 @@ export default function LoginPage() {
                 onChange={e => setUsername(e.target.value)}
                 required
                 autoComplete="username"
-                autoFocus
               />
             </div>
           </div>
@@ -89,13 +88,8 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? (
-              <>
-                <span className="btn-spinner" />
-                Connexion en cours…
-              </>
-            ) : (
-              <span style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
+            {loading ? 'Connexion...' : (
+              <span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px'}}>
                 <FiLogIn /> SE CONNECTER
               </span>
             )}
