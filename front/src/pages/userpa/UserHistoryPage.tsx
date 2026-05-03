@@ -252,7 +252,7 @@ const UserHistoryPage: React.FC = () => {
         Date: f.date ? new Date(f.date).toLocaleDateString('fr-FR') : 'N/A',
         Société: f.billing_company_name_display || f.billing_company || 'N/A',
         'Montant TTC': fmt(f.montant_ttc),
-        'Ajouté par': f.user?.username || '—',
+        'Ajouté par': f.user || '—',
       })),
     },
     interventions: {
@@ -265,7 +265,7 @@ const UserHistoryPage: React.FC = () => {
         Événement: i.evenement || 'N/A',
         Statut: i.status || 'N/A',
         'Coût TTC': fmt(i.cout_prestation_ttc || 0),
-        'Ajouté par': i.user?.username || '—',
+        'Ajouté par': i.user || '—',
       })),
     },
     suiviCarburant: {
@@ -278,7 +278,7 @@ const UserHistoryPage: React.FC = () => {
         Service: s.service,
         Pompiste: s.pompiste || 'N/A',
         Station: s.smitoStation || 'AUCUNE',
-        'Ajouté par': s.user?.username || '—',
+        'Ajouté par': s.user || '—',
       })),
     },
   };
