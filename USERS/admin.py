@@ -171,11 +171,65 @@ class AdminActionLogAdmin(admin.ModelAdmin):
     list_filter = ('timestamp', 'severity', 'model_name')
     search_fields = ('action', 'admin_username')
 
+from django import forms
+from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
+class UserCreationForm(forms.ModelForm):
+    password1 = forms.CharField(label='Mot de passe', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Confirmer le mot de passe', widget=forms.PasswordInput)
+
+    class Meta:
+        model = USER
+        fields = ('username', 'email', 'is_staff', 'is_active', 'is_superuser')
+
+    def clean_password2(self):
+        p1 = self.cleaned_data.get('password1')
+        p2 = self.cleaned_data.get('password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError('Les mots de passe ne correspondent pas.')
+        return p2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+        if commit:
+            user.save()
+        return user
+
+class UserChangeForm(forms.ModelForm):
+    password = ReadOnlyPasswordHashField(
+        label='Mot de passe',
+        help_text='Les mots de passe sont stockés de façon sécurisée. '
+                  '<a href="../password/">Changer le mot de passe ici</a>.',
+    )
+
+    class Meta:
+        model = USER
+        fields = ('username', 'email', 'password', 'is_staff', 'is_active', 'is_superuser')
+
 @admin.register(USER)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'is_staff', 'is_active', 'date_joined')
-    list_filter = ('is_staff', 'is_active')
+class UserAdmin(BaseUserAdmin):
+    form = UserChangeForm
+    add_form = UserCreationForm
+
+    list_display = ('username', 'email', 'is_staff', 'is_superuser', 'is_active', 'date_joined')
+    list_filter = ('is_staff', 'is_superuser', 'is_active')
     search_fields = ('username', 'email')
+    ordering = ('username',)
+    filter_horizontal = ()
+
+    fieldsets = (
+        (None,                  {'fields': ('username', 'password')}),
+        ('Informations',        {'fields': ('email',)}),
+        ('Permissions',         {'fields': ('is_staff', 'is_superuser', 'is_active')}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'password1', 'password2', 'is_staff', 'is_superuser', 'is_active'),
+        }),
+    )
 
 @admin.register(GroupeIntervention)
 class GroupeInterventionAdmin(admin.ModelAdmin):
