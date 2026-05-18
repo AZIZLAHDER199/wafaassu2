@@ -784,7 +784,7 @@ def generate_facture_pdf(request, pk):
             'lieu_intervention': data.get('lieu_intervention', intervention.lieu_intervention or 'N/A'),
             'destination': data.get('destination', intervention.destination or 'N/A'),
             'perimetre': data.get('perimetre', 'Rayon 50 KM'),
-            'description': data.get('description', f"Assistance pour véhicule {intervention.evenement or ''} - Véhicule {intervention.marque or ''} ({intervention.immatriculation or ''}) du {intervention.date_intervention.strftime('%d/%m/%Y')} à {intervention.lieu_intervention or ''} vers {intervention.destination or ''} de  {"billing_company_name_display" or ''}."),
+            'description': data.get('description', f"Assistance pour véhicule {intervention.evenement or ''} - Véhicule {intervention.marque or ''} ({intervention.immatriculation or ''}) du {intervention.date_intervention.strftime('%d/%m/%Y') if intervention.date_intervention else ''} à {intervention.lieu_intervention or ''} vers {intervention.destination or ''}."),
             'montant_ttc': Decimal(str(data.get('montant_ttc', '0.0'))),
         }
 
@@ -901,27 +901,13 @@ def get_suivi_carburant_stats_by_month(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_suivi_carburant(request):
-    print("--- DEBUG Suivi Carburant ---")
-    print(f"Authenticated user: {request.user}")
-    print(f"Is user staff? {request.user.is_staff}")
-
     date_from = request.query_params.get('date_from', None)
     station_filter = request.query_params.get('station', None)
     suivi_carburants = SuiviCarburant.objects.all()
-
-    print(f"Total records before filter: {suivi_carburants.count()}") # عدد السجلات قبل الفلترة
-
-    # هذا هو السطر لي كيدير الفلترة، غادي نعطلكوه مؤقتاً باش نتاكدوا واش فيه المشكل
-    # if not request.user.is_staff:
-    #     suivi_carburants = suivi_carburants.filter(user=request.user)
-    
     if date_from:
         suivi_carburants = suivi_carburants.filter(date__gte=date_from)
     if station_filter:
-        suivi_carburants = suivi_carburants.filter(station__icontains=station_filter)
-    
-    print(f"Total records after filter: {suivi_carburants.count()}") # عدد السجلات بعد الفلترة
-
+        suivi_carburants = suivi_carburants.filter(smitoStation__icontains=station_filter)
     serializer = SuiviCarburantSerializer(suivi_carburants, many=True)
     return Response(serializer.data)
 
@@ -1294,28 +1280,25 @@ from django.utils.decorators import method_decorator
 logger = logging.getLogger(__name__)
 
 class ExcelUploadView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
     def post(self, request, *args, **kwargs):
         logger.info("Upload Excel request received")
         file_obj = request.FILES.get('file')
         file_type = request.POST.get('file_type')
 
         if not file_obj or not file_type:
-            logger.warning("Missing file or file_type")
             return Response({"error": "Fichier ou type manquant."}, status=status.HTTP_400_BAD_REQUEST)
 
+        file_path = None
         try:
             file_path = default_storage.save(file_obj.name, file_obj)
-            logger.info(f"Temporary file saved at: {file_path}")
-
             if not os.path.exists(file_path):
-                logger.error(f"File not found after saving: {file_path}")
                 return Response({"error": "Fichier non trouvé après sauvegarde."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             try:
                 df = pd.read_excel(file_path)
-                logger.info(f"Excel data loaded: Columns {df.columns.tolist()}, Sample rows {df.head().to_dict() if not df.empty else 'Empty'}")
             except Exception as e:
-                logger.error(f"Error reading Excel file: {str(e)}", exc_info=True)
                 return Response({"error": f"Erreur lors de la lecture du fichier Excel: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
             if file_type == 'intervention':
@@ -1324,75 +1307,59 @@ class ExcelUploadView(APIView):
                 STATUS_CHOICES = [choice[0] for choice in Intervention.STATUS_CHOICES]
                 for index, row in df.iterrows():
                     if pd.notna(row.get('Ref Dossier')):
-                        logger.debug(f"Processing row {index} for Intervention: Raw data {row.to_dict()}")
-                        societe_name = row.get('Société d\'Assistance', '').strip()
-                        societe_assistance, created = SocieteAssistance.objects.get_or_create(nom=societe_name)
-                        logger.info(f"Société {societe_name} {'created' if created else 'exists'}")
-
+                        societe_name = str(row.get("Société d'Assistance", '')).strip()
+                        societe_assistance, _ = SocieteAssistance.objects.get_or_create(nom=societe_name)
                         intervention = Intervention(
                             societe_assistance=societe_assistance,
                             ref_dossier=str(row.get('Ref Dossier', ''))[:50],
                             assure=str(row.get('Assuré', ''))[:100],
-                            date_intervention=pd.to_datetime(row.get('Date d\'intervention', ''), errors='coerce').date() if pd.notna(row.get('Date d\'intervention')) else None,
+                            date_intervention=pd.to_datetime(row.get("Date d'intervention", ''), errors='coerce').date() if pd.notna(row.get("Date d'intervention")) else None,
                             evenement=next((e for e in EVENT_CHOICES if e.lower() in str(row.get('Evènement', '')).lower()), 'Remorquage Interurbain')[:100],
                             immatriculation=str(row.get('Immatriculation', ''))[:50],
                             marque=str(row.get('Marque', ''))[:50],
-                            point_attach=str(row.get('Point d\'attach', 'TAMANAR'))[:100],
-                            lieu_intervention=str(row.get('Lieu d\'intervention', ''))[:100],
+                            point_attach=str(row.get("Point d'attach", 'TAMANAR'))[:100],
+                            lieu_intervention=str(row.get("Lieu d'intervention", ''))[:100],
                             destination=str(row.get('Destination', ''))[:100],
                             cout_prestation_ttc=Decimal(str(row.get('Cout de Prestation TTC', 0))) if pd.notna(row.get('Cout de Prestation TTC')) else Decimal('0'),
                             status=next((s for s in STATUS_CHOICES if s.lower() in str(row.get('status', '')).lower()), 'En cours')[:50],
-                            user=request.user
+                            user=request.user,
                         )
                         try:
                             intervention.full_clean()
-                            logger.debug(f"Row {index} for Intervention validated: {intervention.__dict__}")
                             data.append(intervention)
-                        except ValidationError as e:
-                            logger.warning(f"Validation error for row {index}: {str(e)}")
+                        except Exception:
                             continue
                 if not data:
-                    logger.warning(f"No valid data to create interventions. Checked {len(df)} rows")
                     return Response({"message": "0 interventions créées avec succès."}, status=status.HTTP_201_CREATED)
-                created_interventions = Intervention.objects.bulk_create(data, ignore_conflicts=True)
-                created_count = len(created_interventions)
-                logger.info(f"Created {created_count} interventions")
-                return Response({"message": f"{created_count} interventions créées avec succès."}, status=status.HTTP_201_CREATED)
+                created = Intervention.objects.bulk_create(data, ignore_conflicts=True)
+                return Response({"message": f"{len(created)} interventions créées avec succès."}, status=status.HTTP_201_CREATED)
 
             elif file_type == 'suivi_carburant':
                 data = []
                 for index, row in df.iterrows():
                     if pd.notna(row.get('VEHICULE')):
-                        logger.debug(f"Processing row {index} for SuiviCarburant: Raw data {row.to_dict()}")
                         date_value = row.get('DATE', '')
                         date_obj = pd.to_datetime(date_value, errors='coerce').date() if pd.notna(date_value) else None
                         if not date_obj:
-                            logger.warning(f"Invalid date for row {index}: {date_value}")
                             continue
-
                         suivi = SuiviCarburant(
                             vehicule=str(row.get('VEHICULE', ''))[:50],
                             date=date_obj,
                             service=str(row.get('SERVICE', ''))[:50],
                             pompiste=str(row.get('POMPISTE', ''))[:50],
-                            smitoStation='',  # Not in your file, set to empty
+                            smitoStation='',
                             prix=Decimal(str(row.get('PRIX DH', 0))) if pd.notna(row.get('PRIX DH')) else Decimal('0'),
-                            user=request.user
+                            user=request.user,
                         )
                         try:
                             suivi.full_clean()
-                            logger.debug(f"Row {index} for SuiviCarburant validated: {suivi.__dict__}")
                             data.append(suivi)
-                        except ValidationError as e:
-                            logger.warning(f"Validation error for row {index}: {str(e)}")
+                        except Exception:
                             continue
                 if not data:
-                    logger.warning(f"No valid data to create suivi carburant entries. Checked {len(df)} rows")
                     return Response({"message": "0 entrées créées avec succès."}, status=status.HTTP_201_CREATED)
-                created_suivis = SuiviCarburant.objects.bulk_create(data, ignore_conflicts=True)
-                created_count = len(created_suivis)
-                logger.info(f"Created {created_count} suivi carburant entries")
-                return Response({"message": f"{created_count} entrées créées avec succès."}, status=status.HTTP_201_CREATED)
+                created = SuiviCarburant.objects.bulk_create(data, ignore_conflicts=True)
+                return Response({"message": f"{len(created)} entrées créées avec succès."}, status=status.HTTP_201_CREATED)
 
             else:
                 return Response({"error": "Type de fichier non supporté."}, status=status.HTTP_400_BAD_REQUEST)
@@ -1402,9 +1369,9 @@ class ExcelUploadView(APIView):
             return Response({"error": f"Erreur inattendue: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         finally:
-            if os.path.exists(file_path):
+            if file_path and os.path.exists(file_path):
                 default_storage.delete(file_path)
-                logger.info(f"Temporary file deleted: {file_path}")
+
 
 @method_decorator(login_required, name='dispatch')
 class ExportToExcelView(APIView):
